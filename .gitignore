@@ -54,6 +54,9 @@ Thumbs.db
 # VSCode
 .vscode/
 
+# Claude Code local settings
+.claude/settings.local.json
+
 # PyCharm
 .idea/
 
