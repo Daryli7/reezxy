@@ -152,73 +152,72 @@ var DESK = {
   symbol: "M6E",
   name: "Micro EUR/USD futures · Dec '26 (M6EZ6)",
   venue: "CME · Globex",
-  headline: { tone: "bear", text: "▼ Fresh 52-week low at 1.1349. Third straight week of lower lows" }, // tone: bull | bear | neutral
-  price: "1.1371",
-  change: { dir: "down", text: "−0.0006 (−0.05%) · −6 ticks" },            // dir: up | down
-  status: { live: true, text: "Globex open · ~10 min delayed" },
+  headline: { tone: "bear", text: "▼ Rally to 1.1415 failed. Second test of the 1.1349 52-week low zone" }, // tone: bull | bear | neutral
+  price: "1.1366",
+  change: { dir: "down", text: "−0.0011 (−0.10%) · −11 ticks" },            // dir: up | down
+  status: { live: true, text: "Globex · session closes 5:00 PM ET" },
   stats: [
-    ["Session","Wed 9/30"],["Open","1.1378"],["High","1.1381"],["Low","1.1370"],
-    ["Settle 9/29","1.1377"],["ATR (14)","47 ticks"],["52-wk low","1.1349"]
+    ["Session","Wed 9/30"],["Open","1.1377"],["High","1.1415"],["Low","1.1358"],
+    ["Volume","15.6K"],["ATR (14)","53 ticks"],["Open int.","18.0K"]
   ],
 
-  levelsDesc: "From the last month of daily bars plus 6 months of weekly bars. Nothing below 1.1349 for over a year.",
+  levelsDesc: "From M6E Dec '26 daily bars (1 month), weekly bars (6 months) and today's 15-minute tape",
   // kind: r (resistance) | s (support) | p (pivot) | c (current price) — list top to bottom
   levels: [
-    { kind:"r", price:"1.1518–1.1536", tag:"Resistance · major", label:"Sep 21–22 highs. The breakdown shelf and the 50-day EMA (1.1534)" },
-    { kind:"r", price:"1.1449", tag:"Resistance", label:"Fri 9/25 high, the last bounce before this week's leg down" },
-    { kind:"r", price:"1.1411–1.1429", tag:"Resistance", label:"Mon/Tue highs. Sellers have capped every rally here this week" },
-    { kind:"c", price:"1.1371", tag:"Last print", label:"Globex holding near Tuesday's lows, 6 ticks under settle" },
-    { kind:"s", price:"1.1349", tag:"Support · 52-wk low", label:"Tuesday's low. First test, no history below it" },
-    { kind:"s", price:"1.1300", tag:"Support · round", label:"Big figure, about 1 ATR under the 52-week low" },
-    { kind:"s", price:"1.1250", tag:"Support · measured", label:"2-ATR extension from the low. Next magnet if 1.1300 gives" }
+    { kind:"r", price:"1.1449", tag:"Resistance · major", label:"Fri 9/25 high. The line between a bounce and a trend change" },
+    { kind:"r", price:"1.1411–1.1415", tag:"Resistance", label:"Tue and Wed highs. Today's 8:30 spike failed here" },
+    { kind:"r", price:"1.1385–1.1388", tag:"Resistance · intraday", label:"Morning support that broke at 10:51 and capped the midday bounce" },
+    { kind:"c", price:"1.1366", tag:"Last print", label:"Lower highs every 15 minutes since noon, holding just above the lows" },
+    { kind:"s", price:"1.1358–1.1364", tag:"Support · thin", label:"Today's lows. Overnight low 1.1364, afternoon low 1.1358" },
+    { kind:"s", price:"1.1349", tag:"Support · 52-wk low", label:"Tuesday's low. Held on the second test, no history below it" },
+    { kind:"s", price:"1.1300", tag:"Support · round", label:"Big figure, about 1 ATR under the 52-week low" }
   ],
 
-  setupsDesc: "Illustrative levels from current structure. M6E: 0.0001 = 1 tick = $1.25/contract. Size and confirm against your own plan.",
+  setupsDesc: "Plans for the next session. 1 tick = $1.25. Send each as a bracket with a GTC stop.",
   // side: long | short ; state: ARMED | LIMIT | TRIGGERED | STOPPED OUT | TARGET HIT (any text)
   setups: [
-    { name:"52-week-low breakdown", side:"short", state:"ARMED", entry:"1.1344", stop:"1.1392", t1:"1.1300", t2:"1.1255",
-      note:"Sell-stop 5 ticks under the 52-wk low. Risk 48 ticks ($60/contract) · R:R 0.9 / 1.9" },
-    { name:"Pullback short", side:"short", state:"LIMIT", entry:"1.1410", stop:"1.1452", t1:"1.1352", t2:"1.1300",
-      note:"Sell a retest of this week's highs, with the trend. Risk 42 ticks ($52.50/contract) · R:R 1.4 / 2.6" },
-    { name:"Reclaim long", side:"long", state:"ARMED", entry:"1.1452", stop:"1.1395", t1:"1.1518", t2:"1.1580",
-      note:"Buy-stop over Friday's 1.1449 high. Counter-trend, so size down. Risk 57 ticks ($71.25/contract) · R:R 1.2 / 2.2" }
+    { name:"Retest short", side:"short", state:"PLAN", entry:"1.1386", stop:"1.1401", t1:"1.1365", t2:"1.1351",
+      note:"Sell limit into the broken 1.1385 level. Cancel if price trades above 1.1400 first. Risk 15 ticks ($18.75) · R:R 1.4 / 2.3" },
+    { name:"52-week-low breakdown", side:"short", state:"PLAN", entry:"1.1344", stop:"1.1368", t1:"1.1310", t2:"1.1280",
+      note:"Sell stop 5 ticks under 1.1349. Put it in the same one-cancels-the-other group as the retest. Risk 24 ticks ($30) · R:R 1.4 / 2.7" },
+    { name:"Reclaim long", side:"long", state:"PLAN", entry:"1.1452", stop:"1.1395", t1:"1.1518", t2:"1.1580",
+      note:"Only long in the plan. Buy stop over the 1.1449 high. Risk 57 ticks ($71.25) is above your 2% limit, so skip it or tighten it" }
   ],
 
   chart: {
-    title: "22-session range",
-    desc: "Daily high/low band with close, Aug 31 – Sep 30 (6E1! proxy)",
+    title: "21-session range",
+    desc: "M6E Dec '26 daily high/low band with close, Sep 1 – Sep 30",
     decimals: 4,           // 2 for stocks, 0 for index futures, 4 for FX futures
     labelEvery: 3,
     bars: [                // oldest → newest; add live:true on an in-progress bar
-      {d:"Aug 31",h:1.16275,l:1.1583,c:1.16225},{d:"Sep 1",h:1.16305,l:1.1591,c:1.15965},{d:"Sep 2",h:1.16145,l:1.1572,c:1.1591},
-      {d:"Sep 3",h:1.16445,l:1.15875,c:1.1638},{d:"Sep 4",h:1.1637,l:1.1588,c:1.1614},{d:"Sep 8",h:1.16395,l:1.1611,c:1.1631},
-      {d:"Sep 9",h:1.16565,l:1.16225,c:1.16315},{d:"Sep 10",h:1.1643,l:1.1593,c:1.1614},{d:"Sep 11",h:1.1658,l:1.16065,c:1.1638},
-      {d:"Sep 14",h:1.164,l:1.15645,c:1.15985},{d:"Sep 15",h:1.1594,l:1.15685,c:1.15845},{d:"Sep 16",h:1.15975,l:1.15025,c:1.15115},
-      {d:"Sep 17",h:1.15385,l:1.14965,c:1.15155},{d:"Sep 18",h:1.15315,l:1.1495,c:1.1523},{d:"Sep 21",h:1.15355,l:1.15015,c:1.1504},
-      {d:"Sep 22",h:1.1518,l:1.1468,c:1.1481},{d:"Sep 23",h:1.1494,l:1.1409,c:1.14255},{d:"Sep 24",h:1.14365,l:1.1397,c:1.14115},
-      {d:"Sep 25",h:1.14485,l:1.14055,c:1.14365},{d:"Sep 28",h:1.14285,l:1.13905,c:1.1405},{d:"Sep 29",h:1.1411,l:1.13485,c:1.1377},
-      {d:"Sep 30",h:1.13805,l:1.13695,c:1.13715,live:true}
+      {d:"Sep 1",h:1.1671,l:1.1633,c:1.1638},{d:"Sep 2",h:1.1655,l:1.1614,c:1.1632},{d:"Sep 3",h:1.1684,l:1.1627,c:1.1678},
+      {d:"Sep 4",h:1.1676,l:1.1629,c:1.1655},{d:"Sep 8",h:1.1679,l:1.1651,c:1.1672},{d:"Sep 9",h:1.1696,l:1.1663,c:1.1672},
+      {d:"Sep 10",h:1.1683,l:1.1634,c:1.1655},{d:"Sep 11",h:1.1658,l:1.1608,c:1.1638},{d:"Sep 14",h:1.1641,l:1.1564,c:1.1599},
+      {d:"Sep 15",h:1.1594,l:1.1568,c:1.1584},{d:"Sep 16",h:1.1598,l:1.1502,c:1.1512},{d:"Sep 17",h:1.1539,l:1.1497,c:1.1516},
+      {d:"Sep 18",h:1.1532,l:1.1494,c:1.1523},{d:"Sep 21",h:1.1535,l:1.1501,c:1.1504},{d:"Sep 22",h:1.1518,l:1.1468,c:1.1481},
+      {d:"Sep 23",h:1.1490,l:1.1409,c:1.1425},{d:"Sep 24",h:1.1436,l:1.1397,c:1.1412},{d:"Sep 25",h:1.1449,l:1.1405,c:1.1437},
+      {d:"Sep 28",h:1.1428,l:1.1390,c:1.1405},{d:"Sep 29",h:1.1411,l:1.1349,c:1.1377},{d:"Sep 30",h:1.1415,l:1.1358,c:1.1366,live:true}
     ],
-    refs: [ {p:1.1518,kind:"r"},{p:1.1449,kind:"r"},{p:1.1349,kind:"s"},{p:1.1300,kind:"s"} ]
+    refs: [ {p:1.1449,kind:"r"},{p:1.1411,kind:"r"},{p:1.1349,kind:"s"},{p:1.1300,kind:"s"} ]
   },
 
   technicals: {
     source: "CME:6E1!, daily, via TradingView",
     rating: "SELL", tone: "bear",
-    summary: "MAs: <strong>STRONG SELL</strong> · Oscillators: <strong>NEUTRAL</strong> · score −0.40",
-    stats: [["RSI 14","27.8"],["Stoch K/D","7.3 / 8.6"],["CCI 20","−130"],["MACD / sig","−0.0054 / −0.0033"],
-            ["ADX","33.0"],["EMA 20 / 50","1.1493 / 1.1534"],["SMA 200","1.1644"]],
-    note: "Price is below every MA, MACD is under its signal, and ADX 33 says the trend is strong. RSI under 30 and Stoch in single digits are deeply oversold, so wait for a break or a pullback rather than shorting into the hole."
+    summary: "MAs: <strong>STRONG SELL</strong> · Oscillators: <strong>NEUTRAL</strong> · score −0.47",
+    stats: [["RSI 14","27.4"],["Stoch K/D","6.8 / 8.5"],["CCI 20","−125"],["MACD / sig","−0.0054 / −0.0034"],
+            ["ADX","32.7"],["EMA 20 / 50","1.1493 / 1.1534"],["SMA 200","1.1644"]],
+    note: "Nothing has changed since this morning. Price is under every MA and ADX 33 confirms the trend. RSI 27 and Stoch 7 are deeply oversold, so sell rallies or breaks rather than chasing the lows."
   },
 
-  bias: "<strong>Bearish below 1.1449.</strong> Lower highs since Sep 22 (Friday's bounce failed at 1.1449), a new 52-week low on Tuesday, and a trending ADX. Acceptance under <strong class='num'>1.1349</strong> opens 1.1300, then 1.1250. Bulls need <strong class='num'>1.1449</strong> back to call it a washout, then 1.1518–1.1536.",
+  bias: "<strong>Bearish below 1.1415.</strong> Today's rally to <strong class='num'>1.1415</strong> failed again and the session is ending near its lows. Acceptance under <strong class='num'>1.1349</strong> opens 1.1300. Bulls need 1.1415, then <strong class='num'>1.1449</strong>, before a long makes sense.",
 
   specsTitle: "Contract — M6E Dec '26",
-  specs: [["Size","€12,500"],["Tick","0.0001 = $1.25"],["ATR (14) $","≈ $59 / contract"],
-          ["52-wk range","1.1349 – 1.2111"],["1-yr change","−3.5%"],["Last trade","Mon Dec 14 2026"],
-          ["Hours","Sun–Fri 5:00 PM – 4:00 PM CT"]],
+  specs: [["Size","€12,500"],["Tick","0.0001 = $1.25"],["ATR (14) $","≈ $67 / contract"],
+          ["Hist. vol (30d)","4.4% · ~31 ticks/day"],["52-wk range","1.1349 – 1.2111"],
+          ["Last trade","Mon Dec 14 2026"],["Hours","Sun–Fri 5:00 PM – 4:00 PM CT"]],
 
-  footer: "Snapshot ~10:15 PM ET, Tue Sep 29 2026 (Wed 9/30 Globex session) · Prices: TradingView CME:6E1! (same EUR/USD quote as M6E) · Technicals: TradingView · Not investment advice"
+  footer: "Updated ~4:51 PM ET, Wed Sep 30 2026 · Prices and bars: Interactive Brokers (M6E Dec '26, real-time) · Technicals: TradingView · Not investment advice"
 };
 /* ===================== END DATA — no edits needed below ===================== */
 
