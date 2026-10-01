@@ -152,73 +152,75 @@ var DESK = {
   symbol: "MGC",
   name: "Micro Gold · Dec 2026 (MGCZ6)",
   venue: "COMEX · Globex",
-  headline: { tone: "bear", text: "▼ Monday's −3.5% flush hit 4143, the lowest since early Aug. Bouncing off a 4143–45 double bottom tonight" }, // tone: bull | bear | neutral
-  price: "4,210.8",
-  change: { dir: "up", text: "+31.1 (+0.74%)" },            // dir: up | down
-  status: { live: true, text: "Globex open · Wed session · 10-min delayed" },
+  headline: { tone: "neutral", text: "Higher lows for 3 sessions (4,143 → 4,169), but Wednesday's pop to 4,251 was sold. Coiling in 4,143–4,251" }, // tone: bull | bear | neutral
+  price: "4,199.2",
+  change: { dir: "up", text: "+12.5 (+0.30%)" },            // dir: up | down
+  status: { live: true, text: "Market open · Thu session · 10-min delayed" },
   stats: [
-    ["Session","Wed 9/30"],["Open","4,216.0"],["High","4,217.3"],["Low","4,209.2"],
-    ["Prior settle","4,179.7"],["Volume","3,594"],["ATR (14)","97.7 pts"]
+    ["Session","Thu 10/1"],["Open","4,190.2"],["High","4,222.8"],["Low","4,169.4"],
+    ["Prior settle","4,186.7"],["Volume","225.6K"],["ATR (14)","94.1 pts"]
   ],
 
   levelsDesc: "From the last month of daily bars plus the 6-month weekly lows",
   // kind: r (resistance) | s (support) | p (pivot) | c (current price) — list top to bottom
   levels: [
-    { kind:"r", price:"4,338–4,352", tag:"Resistance · major", label:"Sep 24–25 highs, the last lower high. EMA 20/50 sit just above at 4,340/4,361" },
+    { kind:"r", price:"4,338–4,352", tag:"Resistance · major", label:"Sep 24–25 highs, the last lower high. EMA 20 at 4,325 and SMA 20 at 4,353 sit on it" },
     { kind:"r", price:"4,278–4,289", tag:"Resistance", label:"Sep 24–25 lows. The shelf Monday broke through, now overhead supply" },
-    { kind:"r", price:"4,217–4,218", tag:"Resistance", label:"Tuesday's high, retested at tonight's open (4,217.3) and held" },
-    { kind:"c", price:"4,210.8", tag:"Last print", label:"+31 over the Tuesday settle, pinned just under the 4,218 high" },
-    { kind:"s", price:"4,143–4,145", tag:"Support", label:"Mon/Tue double bottom. Closes of 4,168 and 4,180 held above it" },
-    { kind:"s", price:"4,092–4,107", tag:"Support", label:"Jun 8 and Jul 6 weekly lows, the early-Aug breakout base" },
-    { kind:"s", price:"4,015–4,036", tag:"Support · major", label:"Jun–Jul triple bottom (4,014.8 / 4,019 / 4,035.9), the 6-month low" }
+    { kind:"r", price:"4,251", tag:"Resistance", label:"Wed 8 AM ET spike high, sold 73 pts into the 4,186.7 settle" },
+    { kind:"c", price:"4,199.2", tag:"Last print", label:"+12.5 on the day, mid-range after a 4,222.8 high" },
+    { kind:"s", price:"4,169–4,178", tag:"Support", label:"Wed and Thu lows. Higher lows over the 4,143 base" },
+    { kind:"s", price:"4,143–4,145", tag:"Support", label:"Mon/Tue double bottom, the base of the 3-day coil" },
+    { kind:"s", price:"4,015–4,036", tag:"Support · major", label:"Jun–Jul triple bottom (4,014.8 / 4,019 / 4,035.9), the 6-month low. 4,092–4,107 is the step before it" }
   ],
 
   setupsDesc: "Illustrative levels from current structure. MGC = $10/pt ($1 per 0.10 tick). Size and confirm against your own plan.",
   // side: long | short ; state: ARMED | LIMIT | TRIGGERED | STOPPED OUT | TARGET HIT (any text)
   setups: [
+    { name:"Reclaim long (Tue plan)", side:"long", state:"STOPPED OUT", entry:"4,222", stop:"4,175", t1:"4,280", t2:"4,340",
+      note:"Filled Wed ~2 AM ET, ran to 4,251.4 (+29 pts) short of T1, stopped Wed 8 PM ET on the 4,169.4 low. −47 pts (−$470 / contract)" },
     { name:"Double-bottom break short", side:"short", state:"ARMED", entry:"4,139", stop:"4,195", t1:"4,100", t2:"4,040",
-      note:"Sell-stop under the 4,143 double bottom. Risk 56 pts ($560 / contract) · R:R 0.7 / 1.8" },
+      note:"Untouched, the low is 4,169.4. Sell-stop under 4,143. Risk 56 pts ($560 / contract) · R:R 0.7 / 1.8" },
     { name:"Shelf fade short", side:"short", state:"LIMIT", entry:"4,280", stop:"4,330", t1:"4,218", t2:"4,150",
-      note:"Sell a retest of the broken 4,278–89 shelf. Risk 50 pts ($500 / contract) · R:R 1.2 / 2.6" },
-    { name:"Reclaim long", side:"long", state:"ARMED", entry:"4,222", stop:"4,175", t1:"4,280", t2:"4,340",
-      note:"Buy-stop over the 4,218 double high. Counter-trend, size down. Risk 47 pts ($470 / contract) · R:R 1.2 / 2.6" }
+      note:"Unfilled, the high is 4,251.4. Sell a retest of the 4,278–89 shelf. Risk 50 pts ($500 / contract) · R:R 1.2 / 2.6" },
+    { name:"Range-low long", side:"long", state:"LIMIT", entry:"4,172", stop:"4,140", t1:"4,222", t2:"4,250",
+      note:"New. Buy the higher-low zone, out under the double bottom. Counter-trend, size down. Risk 32 pts ($320 / contract) · R:R 1.6 / 2.4" }
   ],
 
   chart: {
-    title: "22-session range",
-    desc: "Daily high/low band with close, Aug 31 – Sep 30 (Globex sessions)",
+    title: "21-session range",
+    desc: "Daily high/low band with close, Sep 2 – Oct 1 (Globex sessions)",
     decimals: 0,           // 2 for stocks, 0 for index futures
     labelEvery: 3,
     bars: [                // oldest → newest; add live:true on an in-progress bar
-      {d:"Aug 31",h:4521.5,l:4445.5,c:4481.5},{d:"Sep 1",h:4510.8,l:4368.8,c:4396.4},{d:"Sep 2",h:4444.5,l:4329.3,c:4414.6},
-      {d:"Sep 3",h:4558.6,l:4426.6,c:4539.9},{d:"Sep 4",h:4537.9,l:4411.4,c:4476.6},{d:"Sep 8",h:4488.7,l:4385.1,c:4439.0},
-      {d:"Sep 9",h:4478.9,l:4384.3,c:4460.7},{d:"Sep 10",h:4479.3,l:4354.8,c:4407.3},{d:"Sep 11",h:4445.2,l:4333.4,c:4408.9},
-      {d:"Sep 14",h:4396.8,l:4293.2,c:4351.9},{d:"Sep 15",h:4358.2,l:4301.4,c:4332.8},{d:"Sep 16",h:4414.1,l:4273.1,c:4387.5},
-      {d:"Sep 17",h:4422.3,l:4294.3,c:4399.7},{d:"Sep 18",h:4439.9,l:4371.2,c:4424.9},{d:"Sep 21",h:4422.2,l:4360.6,c:4383.9},
-      {d:"Sep 22",h:4414.0,l:4327.5,c:4376.4},{d:"Sep 23",h:4407.5,l:4310.7,c:4318.4},{d:"Sep 24",h:4338.4,l:4278.2,c:4298.0},
-      {d:"Sep 25",h:4351.6,l:4289.1,c:4321.2},{d:"Sep 28",h:4320.0,l:4143.0,c:4168.4},{d:"Sep 29",h:4218.0,l:4145.0,c:4179.7},
-      {d:"Sep 30",h:4217.3,l:4209.2,c:4210.8,live:true}
+      {d:"Sep 2",h:4444.5,l:4329.3,c:4414.6},{d:"Sep 3",h:4558.6,l:4426.6,c:4539.9},{d:"Sep 4",h:4537.9,l:4411.4,c:4476.6},
+      {d:"Sep 8",h:4488.7,l:4385.1,c:4439.0},{d:"Sep 9",h:4478.9,l:4384.3,c:4460.7},{d:"Sep 10",h:4479.3,l:4354.8,c:4407.3},
+      {d:"Sep 11",h:4445.2,l:4333.4,c:4408.9},{d:"Sep 14",h:4396.8,l:4293.2,c:4351.9},{d:"Sep 15",h:4358.2,l:4301.4,c:4332.8},
+      {d:"Sep 16",h:4414.1,l:4273.1,c:4387.5},{d:"Sep 17",h:4422.3,l:4294.3,c:4399.7},{d:"Sep 18",h:4439.9,l:4371.2,c:4424.9},
+      {d:"Sep 21",h:4422.2,l:4360.6,c:4383.9},{d:"Sep 22",h:4414.0,l:4327.5,c:4376.4},{d:"Sep 23",h:4407.5,l:4310.7,c:4318.4},
+      {d:"Sep 24",h:4338.4,l:4278.2,c:4298.0},{d:"Sep 25",h:4351.6,l:4289.1,c:4321.2},{d:"Sep 28",h:4320.0,l:4143.0,c:4168.4},
+      {d:"Sep 29",h:4218.0,l:4145.0,c:4179.7},{d:"Sep 30",h:4251.4,l:4178.0,c:4186.7},
+      {d:"Oct 1",h:4222.8,l:4169.4,c:4199.2,live:true}
     ],
-    refs: [ {p:4338,kind:"r"},{p:4278,kind:"r"},{p:4143,kind:"s"},{p:4092,kind:"s"} ]
+    refs: [ {p:4289,kind:"r"},{p:4251,kind:"r"},{p:4169,kind:"s"},{p:4143,kind:"s"} ]
   },
 
   technicals: {
-    source: "COMEX:MGC1!, daily, via TradingView",
+    source: "Computed from IBKR daily bars (MGCZ6) · TradingView rate-limited",
     rating: "SELL", tone: "bear",
-    summary: "MAs: <strong>STRONG SELL</strong> · Oscillators: <strong>NEUTRAL</strong> · score −0.40",
-    stats: [["RSI 14","37.6"],["Stoch K/D","13.7 / 13.5"],["CCI 20","−155"],["MACD / sig","−53.1 / −25.8"],
-            ["ADX","19.0"],["EMA 20 / 50","4,340 / 4,361"],["SMA 200","4,556"]],
-    note: "Below every MA, with MACD well under its signal, so the trend is down. Stoch and CCI are oversold and ADX is under 20, which favours selling rallies into 4,280–4,340 over chasing a break of 4,143."
+    summary: "Price below EMA 20/50 and SMA 50/200 · MACD under signal and widening · <strong>own read, not TradingView's rating</strong>",
+    stats: [["RSI 14","36.2"],["Stoch K/D","14.8 / 13.1"],["MACD / sig","−60.6 / −35.4"],["Mom 10","−200.5"],
+            ["EMA 20 / 50","4,325 / 4,365"],["SMA 50","4,371"],["SMA 200","4,643"]],
+    note: "The trend is still down and MACD is still falling. Stoch has sat near 14 for three sessions without a bullish cross. The 3-day coil is a pause, not a reversal, until price closes over 4,289."
   },
 
-  bias: "<strong>Bearish below 4,289.</strong> Lower highs since the Sep 3 peak at 4,559, then Monday's break of the 4,278 shelf. Tonight's bounce is still inside Tuesday's range. A daily close under <strong class='num'>4,143</strong> opens 4,100, then the 4,015–4,036 six-month low. Bulls need a close back over <strong class='num'>4,289</strong> to neutralise, and over 4,352 to turn it.",
+  bias: "<strong>Bearish below 4,289, rangebound inside 4,143–4,251.</strong> Three sessions of higher lows show sellers easing. Wednesday's failed spike to 4,251 shows buyers can't hold strength yet. A daily close under <strong class='num'>4,143</strong> restarts the leg down to 4,092–4,107, then 4,015–4,036. Bulls need a close over <strong class='num'>4,251</strong> first, and over 4,289 to neutralise.",
 
   specsTitle: "Contract specs — MGCZ6",
   specs: [["Size / tick","10 oz · 0.10 = $1"],["Point value","$10 per $1.00"],["Expiry","Dec 29 2026"],
-          ["Open interest","93,423 (Oct: 8,126)"],["Hist. vol (30d)","23.1% · ~61 pts/day"],["6-mo range","4,014.8 – 5,015.8"],
+          ["Open interest","90,407"],["Hist. vol (30d)","22.2% · ~59 pts/day"],["6-mo range","4,014.8 – 5,015.8"],
           ["Hours","Sun–Fri 6:00 PM – 5:00 PM ET"]],
 
-  footer: "Snapshot 6:43 PM ET, Tue Sep 29 2026 (10-min delayed) · Price/levels: Interactive Brokers, Dec contract (active; Oct front month is thin) · Technicals: TradingView · Not investment advice"
+  footer: "Snapshot 12:01 PM ET, Thu Oct 1 2026 (10-min delayed) · Price/levels: Interactive Brokers, Dec contract · Technicals computed from IBKR bars (TradingView returned 429) · Not investment advice"
 };
 /* ===================== END DATA — no edits needed below ===================== */
 
