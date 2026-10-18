@@ -152,61 +152,61 @@ var DESK = {
   symbol: "BTCUSD",
   name: "Bitcoin / US Dollar · Spot crypto",
   venue: "PAXOS · 24/7",
-  headline: { tone: "neutral", text: "◆ Coiling under the 87.4K 6-month high: 5-day range 82.55K–85.25K after the +13% Sep 17–22 leg" },
-  price: "$83,574",
-  change: { dir: "up", text: "+19.75 (+0.02%)" },
-  status: { live: true, text: "Live 24/7 · vs 4 PM ET close 83,554" },
+  headline: { tone: "bear", text: "▼ Six lower highs since the 87.4K triple top. Pressing the 79.7–80.3K floor, −3.0% since Sep 29" },
+  price: "$81,024",
+  change: { dir: "down", text: "−456 (−0.56%)" },
+  status: { live: true, text: "Live 24/7 · weekend session since Fri 4 PM ET" },
   stats: [
-    ["Session","Tue 9/29"],["Open","83,374"],["High","84,543"],["Low","82,733"],
-    ["Close","83,554"],["Spread","$3.25"],["ATR (14)","$3,269"]
+    ["Session","Weekend"],["Open","81,480"],["High","82,185"],["Low","80,786"],
+    ["Prior close","81,480"],["Spread","$3.75"],["ATR (14)","$2,495"]
   ],
 
-  levelsDesc: "From the last month of daily bars plus the 6-month weekly highs and lows",
+  levelsDesc: "From daily and 4-hour bars since Sep 21, plus the 6-month weekly lows",
   levels: [
-    { kind:"r", price:"87,275–87,395", tag:"Resistance · major", label:"Sep 22–23 double top, the 6-month high. Sold off 4 sessions straight from here" },
-    { kind:"r", price:"85,143–85,249", tag:"Resistance", label:"Sep 25 + Sep 28 highs, the top of the 5-day box" },
-    { kind:"r", price:"84,543–84,897", tag:"Resistance", label:"Today's high + Sep 24 high. First supply overhead" },
-    { kind:"c", price:"83,574", tag:"Last print", label:"Mid-box. Sitting on the old May 83,214 weekly high (now a flip level)" },
-    { kind:"s", price:"82,554–82,870", tag:"Support", label:"Sep 23–29 lows. Bottom of the box, tested 3 times" },
-    { kind:"s", price:"80,095–81,181", tag:"Support · major", label:"Sep 21 breakout-day low + Sep 18 close. Gap fill and 20-day SMA (80.5K)" },
-    { kind:"s", price:"74,894–76,058", tag:"Support · major", label:"Sep 10–16 lows. The month's floor, where the leg up started" }
+    { kind:"r", price:"86,996–87,395", tag:"Resistance · major", label:"Triple top: Sep 22 87,395, Oct 2 87,203, Oct 5 86,996. Each test sold harder" },
+    { kind:"r", price:"84,044–84,265", tag:"Resistance", label:"Oct 12–14 highs. The lower-high shelf that capped last week" },
+    { kind:"r", price:"82,185–82,553", tag:"Resistance", label:"Today's high + Oct 15–16 highs. EMA 20 sits at 82,474" },
+    { kind:"c", price:"81,024", tag:"Last print", label:"Under the 20-day averages, above the 50-day. Inside a descending triangle" },
+    { kind:"s", price:"80,708–80,786", tag:"Support · thin", label:"Fri Oct 16 low + today's low. Tested twice in 3 days" },
+    { kind:"s", price:"79,714–80,321", tag:"Support · major", label:"Oct 8 + Oct 15 lows, the triangle floor. EMA 50 at 80,443" },
+    { kind:"s", price:"74,894–76,058", tag:"Support · major", label:"Sep 10–16 base where the 87K leg started. Next shelf if the floor breaks" }
   ],
 
-  setupsDesc: "Illustrative levels from current structure. Risk per 1 BTC and per 0.1 BTC (= 1 CME MBT contract). Size to your own plan.",
+  setupsDesc: "Illustrative levels. Risk per 1 BTC and per 0.1 BTC (= 1 CME MBT contract). Size to your own plan.",
   setups: [
-    { name:"Box breakdown short", side:"short", state:"ARMED", entry:"82,450", stop:"84,050", t1:"80,100", t2:"77,000",
-      note:"Sell-stop under the 3x-tested 82.55K floor. Risk $1,600/BTC ($160 / 0.1 BTC) · R:R 1.5 / 3.4" },
-    { name:"Box breakout long", side:"long", state:"ARMED", entry:"85,350", stop:"83,700", t1:"87,300", t2:"89,500",
-      note:"Buy-stop over the 85.25K box top. Risk $1,650/BTC ($165 / 0.1 BTC) · R:R 1.2 / 2.5. T1 is the double top, so trim there" },
-    { name:"Gap-fill pullback long", side:"long", state:"LIMIT", entry:"80,100", stop:"78,600", t1:"82,600", t2:"85,100",
-      note:"Resting bid at the Sep 21 breakout low / 20-day SMA. Risk $1,500/BTC ($150 / 0.1 BTC) · R:R 1.7 / 3.3" }
+    { name:"Pullback long (from Sep 29 desk)", side:"long", state:"OPEN +924", entry:"80,100", stop:"79,600", t1:"82,600", t2:"85,100",
+      note:"Filled Oct 15 on the 79,714 flush, peaked 82,553 (47 short of T1). Stop raised from 78,600 to under the floor: risk now $500/BTC ($50 / 0.1 BTC)" },
+    { name:"Floor breakdown short", side:"short", state:"ARMED", entry:"79,600", stop:"81,300", t1:"77,000", t2:"75,100",
+      note:"Sell-stop under the 79,714 triangle floor. Risk $1,700/BTC ($170 / 0.1 BTC) · R:R 1.5 / 2.6" },
+    { name:"Lower-high fade short", side:"short", state:"LIMIT", entry:"82,450", stop:"83,300", t1:"80,800", t2:"79,800",
+      note:"Sell into the 82.2–82.55K lower-high zone / EMA 20. Risk $850/BTC ($85 / 0.1 BTC) · R:R 1.9 / 3.1" }
   ],
 
   chart: {
-    title: "22-session range",
-    desc: "Daily high/low band with close (4 PM ET cut), Aug 31 – Sep 29",
+    title: "20-session range",
+    desc: "Daily high/low band with close (4 PM ET cut), Sep 21 – Oct 16. Oct 16 high excludes an 87,100 bad print",
     decimals: 0,
     labelEvery: 3,
-    bars: [ {d:"Aug 31",h:81000,l:77000,c:78881.25},{d:"Sep 1",h:79461.5,l:76384.25,c:77270},{d:"Sep 2",h:77747.5,l:76217.25,c:77310},{d:"Sep 3",h:81809.5,l:76935.5,c:81721.75},{d:"Sep 4",h:82298,l:78647.5,c:79783.75},{d:"Sep 7",h:80545.25,l:78660.25,c:79358},{d:"Sep 8",h:79471.5,l:77610.25,c:78438.5},{d:"Sep 9",h:79745.5,l:78028.75,c:78210.75},{d:"Sep 10",h:78524.25,l:76654.75,c:77147},{d:"Sep 11",h:79782.5,l:76058,c:77268.75},{d:"Sep 14",h:79335.25,l:76360,c:78970},{d:"Sep 15",h:79586.5,l:74894,c:76117.5},{d:"Sep 16",h:76495.5,l:74986,c:76008.25},{d:"Sep 17",h:79991,l:75578.5,c:76521},{d:"Sep 18",h:81378,l:76188,c:81181},{d:"Sep 21",h:86894.5,l:80094.5,c:86492.25},{d:"Sep 22",h:87395.25,l:85081.25,c:86205.5},{d:"Sep 23",h:87275,l:83512.25,c:84507},{d:"Sep 24",h:84897,l:82870.25,c:84388.75},{d:"Sep 25",h:85249,l:83159.5,c:83998.75},{d:"Sep 28",h:85143.5,l:82554.5,c:83355.25},{d:"Sep 29",h:84542.75,l:82732.5,c:83554.25} ],
-    refs: [ {p:87395,kind:"r"},{p:85249,kind:"r"},{p:82554,kind:"s"},{p:80095,kind:"s"} ]
+    bars: [ {d:"Sep 21",h:86894.5,l:80094.5,c:86492.25},{d:"Sep 22",h:87395.25,l:85081.25,c:86205.5},{d:"Sep 23",h:87275,l:83512.25,c:84507},{d:"Sep 24",h:84897,l:82870.25,c:84388.75},{d:"Sep 25",h:85249,l:83159.5,c:83998.75},{d:"Sep 28",h:85143.5,l:82554.5,c:83355.25},{d:"Sep 29",h:84542.75,l:82732.5,c:83554.25},{d:"Sep 30",h:85621.75,l:82920.5,c:83566.75},{d:"Oct 1",h:85236,l:83133,c:84615.25},{d:"Oct 2",h:87203,l:83858.5,c:84293.5},{d:"Oct 5",h:86996.25,l:84203.25,c:85720.25},{d:"Oct 6",h:86688,l:85105.75,c:85615.25},{d:"Oct 7",h:85672.25,l:82739.5,c:83399.75},{d:"Oct 8",h:83569.75,l:80321.25,c:81706.25},{d:"Oct 9",h:83472.25,l:81540.75,c:82242.25},{d:"Oct 12",h:84264.75,l:82203.75,c:82757},{d:"Oct 13",h:84071,l:80938,c:83198.75},{d:"Oct 14",h:84044,l:81436,c:81735},{d:"Oct 15",h:82549.75,l:79714,c:82297.5},{d:"Oct 16",h:82553,l:80708.5,c:81479.5} ],
+    refs: [ {p:84265,kind:"r"},{p:82553,kind:"r"},{p:80708,kind:"s"},{p:79714,kind:"s"} ]
   },
 
   technicals: {
-    source: "Computed from IBKR daily/weekly bars (TradingView rate-limited)",
-    rating: "LEAN BUY", tone: "bull",
-    summary: "Above 10/20-day and 10/26-week MAs · momentum <strong>NEUTRAL</strong> after the pullback",
-    stats: [["RSI 14","56.8"],["Stoch %K 14","69"],["SMA 10 / 20","82,621 / 80,527"],["EMA 20","80,619"],
-            ["SMA 10w / 26w","75,191 / 71,905"],["ATR 14","3,269"],["Realized vol","~51% ann."]],
-    note: "Trend up on every MA, but RSI has cooled from the Sep 22 spike and price is chopping sideways. It's a range until the box breaks, so trade the edges and not the middle."
+    source: "BITSTAMP:BTCUSD, daily, via TradingView",
+    rating: "NEUTRAL", tone: "neutral",
+    summary: "MAs: <strong>SELL</strong> · Oscillators: <strong>BUY</strong> · score −0.02",
+    stats: [["RSI 14","44.7"],["Stoch K/D","21.9 / 24.6"],["CCI 20","−101"],["MACD / sig","−40 / 480"],
+            ["ADX","23.0"],["EMA 20 / 50","82,474 / 80,443"],["SMA 200","72,490"]],
+    note: "Below the 10- and 20-day averages with MACD crossed under its signal, so short-term momentum is down. Stoch and CCI are near oversold and price is still above the 50/100/200-day averages, so the bigger trend is intact until 79.7K breaks."
   },
 
-  bias: "<strong>Neutral-bullish above 82,554.</strong> Higher lows since Sep 16 and price holding above the old 83.2K May high. A 4 PM close over <strong class='num'>85,249</strong> retests the 87.4K double top. A close under <strong class='num'>82,554</strong> invalidates it and targets the 80.1K gap fill, then 75–76K.",
+  bias: "<strong>Bearish below 82,553.</strong> Six straight lower highs since the Sep 22 top and price is under the 20-day averages. A 4 PM ET close under <strong class='num'>79,714</strong> breaks the floor and opens 77K, then the 74.9–76K September base. Bulls need a close over <strong class='num'>82,553</strong>, then 84,265, to cancel it.",
 
   specsTitle: "Profile — BTCUSD",
-  specs: [["6-mo range","57,500 – 87,395"],["1-mo change","+5.9%"],["6-mo change","+24.2%"],
-          ["Daily σ (≈30d)","~$2,220"],["Futures proxy","CME MBT (0.1 BTC)"],["Hours","24/7 · 4 PM ET cut"]],
+  specs: [["6-mo range","57,500 – 87,395"],["Since Sep 29","−3.0%"],["From 6-mo high","−7.3%"],
+          ["Daily σ (20d)","~$940 · 22% ann."],["Futures proxy","CME MBT (0.1 BTC)"],["Hours","24/7 · 4 PM ET cut"]],
 
-  footer: "Snapshot 6:28 PM ET, Tue Sep 29 2026 · Price/levels: Interactive Brokers (PAXOS spot) · Technicals computed from IBKR bars · Not investment advice"
+  footer: "Snapshot 2:24 PM ET, Sun Oct 18 2026 · Price/levels: Interactive Brokers (PAXOS spot) · Technicals: TradingView · Not investment advice"
 };
 /* ===================== END DATA — no edits needed below ===================== */
 
