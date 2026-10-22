@@ -152,72 +152,72 @@ var DESK = {
   symbol: "M6E",
   name: "Micro EUR/USD futures · Dec '26 (M6EZ6)",
   venue: "CME · Globex",
-  headline: { tone: "neutral", text: "Sunday's gap under Friday's low reversed within two hours. Range 1.1219–1.1296, waiting for a break" }, // tone: bull | bear | neutral
-  price: "1.1252",
-  change: { dir: "down", text: "−0.0007 (−0.06%) · −7 ticks" },            // dir: up | down
-  status: { live: true, text: "Globex · Mon 10/19 session open since 6:00 PM ET Sun" },
+  headline: { tone: "bull", text: "▲ Rising lows 1.1213 → 1.1230 → 1.1240 under a flat 1.1287–1.1296 ceiling. Pressing the top again" }, // tone: bull | bear | neutral
+  price: "1.1273",
+  change: { dir: "up", text: "+0.0025 (+0.22%) · +25 ticks" },            // dir: up | down
+  status: { live: true, text: "Globex · Thu 10/22 session open since 6:00 PM ET Wed" },
   stats: [
-    ["Fri settle","1.1259"],["Week high","1.1296"],["Week low","1.1141"],["Mon open","1.1229"],
-    ["Mon range","1.1219–1.1257"],["ATR (14)","75 ticks"],["Open int.","18.9K"]
+    ["Wed close","1.1249"],["Thu high","1.1280"],["Thu low","1.1251"],["Ceiling","1.1296"],
+    ["Wed low","1.1240"],["ATR (14)","59 ticks"],["20-day EMA","1.1294"]
   ],
 
-  levelsDesc: "From M6E Dec '26 daily bars (1 month), weekly bars (6 months) and last week's 4-hour tape",
+  levelsDesc: "From CME 6E1! daily and 4-hour bars (same EUR/USD price as M6E). Levels can differ from M6E by 1 tick",
   // kind: r (resistance) | s (support) | p (pivot) | c (current price) — list top to bottom
   levels: [
-    { kind:"r", price:"1.1349–1.1358", tag:"Resistance · major", label:"The old 52-week low from Sep 29–30. The next big test if 1.1319 breaks" },
-    { kind:"r", price:"1.1296–1.1319", tag:"Resistance", label:"Friday's 1.1296 high, Oct 6's 1.1308 and Oct 2's 1.1319. The 20-day EMA sits at 1.1316" },
-    { kind:"r", price:"1.1268–1.1276", tag:"Resistance · pivot", label:"Thursday's high and Friday's 4 AM ET breakout level" },
-    { kind:"c", price:"1.1252", tag:"Last print", label:"Bounced 38 ticks off Sunday's 1.1219 low to 1.1257, then flat on thin Asia volume" },
-    { kind:"s", price:"1.1219–1.1235", tag:"Support", label:"Sunday's 1.1219 opening low and Friday's 1.1235 low. A break under 1.1219 is the new short trigger" },
-    { kind:"s", price:"1.1181–1.1194", tag:"Support", label:"The old double bottom and Monday's breakdown low" },
-    { kind:"s", price:"1.1141", tag:"Support · 52-wk low", label:"Wednesday's low. The breakdown failed within a day" }
+    { kind:"r", price:"1.1349–1.1358", tag:"Resistance · major", label:"The old 52-week low from Sep 29–30. The target if the ceiling breaks" },
+    { kind:"r", price:"1.1308–1.1319", tag:"Resistance", label:"Oct 6 and Oct 2 highs. A close above 1.1319 ends the downtrend" },
+    { kind:"r", price:"1.1287–1.1296", tag:"Resistance · ceiling", label:"Tuesday's 1.1287 and Oct 16's 1.1296, plus the 20-day EMA at 1.1294" },
+    { kind:"c", price:"1.1273", tag:"Last print", label:"Up 25 ticks in Thursday's Asia session, 14 ticks under the ceiling" },
+    { kind:"s", price:"1.1240–1.1245", tag:"Support · rising lows", label:"Wednesday's low. Where the rising floor sits on Thursday" },
+    { kind:"s", price:"1.1213–1.1230", tag:"Support", label:"Monday's and Tuesday's lows, the first two steps of the rising floor" },
+    { kind:"s", price:"1.1141", tag:"Support · 52-wk low", label:"Oct 14 low. The breakdown failed within a day" }
   ],
 
-  setupsDesc: "Re-armed for Monday. The reversal-fails short filled at the 1.1229 open and was stopped at 1.1257 at 8 PM ET (−$35), cancelling the old group. Place these three as a new one-cancels-the-other group with GTC stops. 1 tick = $1.25.",
+  setupsDesc: "Plans for Thursday. 1 tick = $1.25. The buy limit and the short can't share a group (the limit always fills first on a dip). Bullish group: buy limit + breakout long. Two-way group: breakout long + short. GTC stops.",
   // side: long | short ; state: ARMED | LIMIT | TRIGGERED | STOPPED OUT | TARGET HIT (any text)
   setups: [
-    { name:"Resistance short", side:"short", state:"PLAN", entry:"1.1305", stop:"1.1330", t1:"1.1265", t2:"1.1236",
-      note:"Sell limit into the 1.1296–1.1319 band and the 20-day EMA. Risk 25 ticks ($31.25) · R:R 1.6 / 2.8" },
-    { name:"Trend-change long", side:"long", state:"PLAN", entry:"1.1324", stop:"1.1297", t1:"1.1358", t2:"1.1400",
-      note:"Buy stop over Oct 2's 1.1319 high. Clears the last swing high of the decline. Risk 27 ticks ($33.75) · R:R 1.3 / 2.8" },
-    { name:"Sunday-low break short", side:"short", state:"PLAN", entry:"1.1214", stop:"1.1241", t1:"1.1175", t2:"1.1141",
-      note:"Sell stop 5 ticks under Sunday's 1.1219 low. Replaces the stopped reversal-fails short. Risk 27 ticks ($33.75) · R:R 1.4 / 2.7" }
+    { name:"Rising-lows buy limit", side:"long", state:"LIMIT", entry:"1.1245", stop:"1.1218", t1:"1.1287", t2:"1.1319",
+      note:"Buy a pullback to the rising floor. The stop sits under Tuesday's 1.1230 low, so it's out only if the floor breaks. Risk 27 ticks ($33.75) · R:R 1.6 / 2.7" },
+    { name:"Ceiling breakout long", side:"long", state:"PLAN", entry:"1.1324", stop:"1.1297", t1:"1.1358", t2:"1.1400",
+      note:"Buy stop over Oct 2's 1.1319 high, clearing the ceiling and the 20-day EMA. Risk 27 ticks ($33.75) · R:R 1.3 / 2.8" },
+    { name:"Rising-lows break short", side:"short", state:"PLAN", entry:"1.1235", stop:"1.1262", t1:"1.1195", t2:"1.1160",
+      note:"Sell stop under Wednesday's 1.1240 low, for the two-way group only. Risk 27 ticks ($33.75) · R:R 1.5 / 2.8" }
   ],
 
   chart: {
     title: "21-session range",
-    desc: "M6E Dec '26 daily high/low band with close, Sep 21 – Oct 19",
+    desc: "CME 6E1! daily high/low band with close, Sep 24 – Oct 22",
     decimals: 4,           // 2 for stocks, 0 for index futures, 4 for FX futures
     labelEvery: 3,
     bars: [                // oldest → newest; add live:true on an in-progress bar
-      {d:"Sep 21",h:1.1535,l:1.1501,c:1.1504},{d:"Sep 22",h:1.1518,l:1.1468,c:1.1481},{d:"Sep 23",h:1.1490,l:1.1409,c:1.1425},
-      {d:"Sep 24",h:1.1436,l:1.1397,c:1.1412},{d:"Sep 25",h:1.1449,l:1.1405,c:1.1437},{d:"Sep 28",h:1.1428,l:1.1390,c:1.1405},
-      {d:"Sep 29",h:1.1411,l:1.1349,c:1.1377},{d:"Sep 30",h:1.1415,l:1.1358,c:1.1367},{d:"Oct 1",h:1.1371,l:1.1248,c:1.1268},
-      {d:"Oct 2",h:1.1319,l:1.1255,c:1.1284},{d:"Oct 5",h:1.1295,l:1.1194,c:1.1249},{d:"Oct 6",h:1.1308,l:1.1235,c:1.1293},
-      {d:"Oct 7",h:1.1295,l:1.1196,c:1.1230},{d:"Oct 8",h:1.1257,l:1.1201,c:1.1239},{d:"Oct 9",h:1.1272,l:1.1218,c:1.1232},
-      {d:"Oct 12",h:1.1247,l:1.1181,c:1.1185},{d:"Oct 13",h:1.1233,l:1.1183,c:1.1230},{d:"Oct 14",h:1.1240,l:1.1141,c:1.1182},
-      {d:"Oct 15",h:1.1268,l:1.1183,c:1.1239},{d:"Oct 16",h:1.1296,l:1.1235,c:1.1260},{d:"Oct 19",h:1.1257,l:1.1219,c:1.1252,live:true}
+      {d:"Sep 24",h:1.14365,l:1.1397,c:1.14115},{d:"Sep 25",h:1.14485,l:1.14055,c:1.14365},{d:"Sep 28",h:1.14285,l:1.13905,c:1.1405},
+      {d:"Sep 29",h:1.1411,l:1.13485,c:1.1377},{d:"Sep 30",h:1.14175,l:1.1358,c:1.1367},{d:"Oct 1",h:1.13705,l:1.1249,c:1.1268},
+      {d:"Oct 2",h:1.1319,l:1.1255,c:1.12845},{d:"Oct 5",h:1.12945,l:1.1194,c:1.12485},{d:"Oct 6",h:1.1309,l:1.1235,c:1.12925},
+      {d:"Oct 7",h:1.1295,l:1.1196,c:1.1230},{d:"Oct 8",h:1.12565,l:1.12015,c:1.12385},{d:"Oct 9",h:1.12725,l:1.1217,c:1.12315},
+      {d:"Oct 12",h:1.12465,l:1.11815,c:1.1185},{d:"Oct 13",h:1.1233,l:1.11825,c:1.12295},{d:"Oct 14",h:1.12395,l:1.11415,c:1.1182},
+      {d:"Oct 15",h:1.1268,l:1.1182,c:1.12385},{d:"Oct 16",h:1.1296,l:1.12345,c:1.12595},{d:"Oct 19",h:1.1261,l:1.1213,c:1.1238},
+      {d:"Oct 20",h:1.1287,l:1.1230,c:1.12625},{d:"Oct 21",h:1.1266,l:1.12395,c:1.12485},{d:"Oct 22",h:1.12795,l:1.1251,c:1.1273,live:true}
     ],
-    refs: [ {p:1.1319,kind:"r"},{p:1.1296,kind:"r"},{p:1.1219,kind:"s"},{p:1.1141,kind:"s"} ]
+    refs: [ {p:1.1319,kind:"r"},{p:1.1296,kind:"r"},{p:1.1245,kind:"s"},{p:1.1141,kind:"s"} ]
   },
 
   technicals: {
-    source: "Computed from IBKR M6E daily bars through Friday's close",
-    rating: "BASING", tone: "neutral",
-    summary: "Trend: <strong>DOWN, WEAKENING</strong> · Momentum: <strong>TURNING UP</strong>",
-    stats: [["RSI 14","38.9"],["Stoch K/D","30.3 / 21.1"],["CCI 20","−41"],["MACD / sig","−0.0086 / −0.0089"],
-            ["ADX / −DI","53.4 / 28.5"],["EMA 20 / 50","1.1316 / 1.1424"],["SMA 50","1.1508"]],
-    note: "MACD crossed above its signal line for the first time in the decline, RSI climbed from 20 to 39, and Stoch K is above D. ADX is still 53 because it lags. The falling −DI (41 to 29) shows the selling is fading. Price has to clear the 20-day EMA at 1.1316 to confirm a turn."
+    source: "CME:6E1!, daily, via TradingView",
+    rating: "SELL", tone: "neutral",
+    summary: "MAs: <strong>STRONG SELL</strong> · Oscillators: <strong>BUY</strong> · score −0.18",
+    stats: [["RSI 14","43.3"],["Stoch K/D","63.9 / 52.3"],["CCI 20","−11"],["MACD / sig","−0.0061 / −0.0074"],
+            ["ADX","45.7"],["EMA 20 / 50","1.1294 / 1.1397"],["SMA 200","1.1601"]],
+    note: "There's a split. The moving averages still point down because price is under all of them, but every oscillator has turned up: MACD is above its signal, Stoch is rising and RSI has climbed from 20 to 43. Price is sitting right under the 20-day EMA (1.1294). A daily close above it would turn the MA rating too."
   },
 
-  bias: "<strong>Neutral, with the edge shifting up.</strong> Wednesday's new low at 1.1141 failed within a day, and Friday made a higher high at <strong class='num'>1.1296</strong>. A close above <strong class='num'>1.1319</strong> ends the downtrend and opens 1.1358. A break back under <strong class='num'>1.1219</strong> puts 1.1181 and the 1.1141 low back in play.",
+  bias: "<strong>Neutral-to-bullish above 1.1240.</strong> Each low this week has been higher (1.1213, 1.1230, 1.1240) while the highs stall at <strong class='num'>1.1287–1.1296</strong>. That pattern usually breaks upward. A close above <strong class='num'>1.1319</strong> confirms it and opens 1.1358. Losing <strong class='num'>1.1235</strong> breaks the rising floor and puts 1.1213 and 1.1141 back in play.",
 
   specsTitle: "Contract — M6E Dec '26",
-  specs: [["Size","€12,500"],["Tick","0.0001 = $1.25"],["ATR (14) $","≈ $94 / contract"],
-          ["Hist. vol (30d)","5.1% · ~36 ticks/day"],["52-wk range","1.1141 – 1.2111"],
+  specs: [["Size","€12,500"],["Tick","0.0001 = $1.25"],["ATR (14) $","≈ $74 / contract"],
+          ["Volatility (1-month)","0.59% / day"],["52-wk range","1.1141 – 1.2111"],
           ["Last trade","Mon Dec 14 2026"],["Hours","Sun–Fri 5:00 PM – 4:00 PM CT"]],
 
-  footer: "Updated ~9:02 PM ET, Sun Oct 18 2026 (Mon 10/19 Globex session) · Prices and bars: Interactive Brokers (M6E Dec '26, real-time) · Technicals computed from IBKR daily bars · Not investment advice"
+  footer: "Updated ~11:29 PM ET, Wed Oct 21 2026 (Thu 10/22 Globex session) · Prices and technicals: TradingView CME:6E1! (same EUR/USD quote as M6E; IBKR not connected in this session) · Not investment advice"
 };
 /* ===================== END DATA — no edits needed below ===================== */
 
