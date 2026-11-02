@@ -152,72 +152,72 @@ var DESK = {
   symbol: "M6E",
   name: "Micro EUR/USD futures · Dec '26 (M6EZ6)",
   venue: "CME · Globex",
-  headline: { tone: "neutral", text: "Triangle broke down Oct 22 → new 52-week low 1.1124 Thursday, then an 81-tick reversal to close near the high" }, // tone: bull | bear | neutral
-  price: "1.1201",
-  change: { dir: "up", text: "+0.0027 (+0.24%) · +27 ticks" },            // dir: up | down
-  status: { live: false, text: "Closed · Fri 10/30 session opens 6:00 PM ET" },
+  headline: { tone: "bear", text: "▼ The bounce off 1.1124 failed at the old 1.1235 floor. Range 1.1124–1.1235 inside the downtrend" }, // tone: bull | bear | neutral
+  price: "1.1186",
+  change: { dir: "up", text: "0.0000 (0.00%) · unchanged" },            // dir: up | down
+  status: { live: true, text: "Globex · Mon 11/2 session open since 6:00 PM ET Sun" },
   stats: [
-    ["Wed close","1.1174"],["Thu open","1.1174"],["Thu high","1.1205"],["Thu low","1.1124"],
-    ["Thu volume","22.9K"],["ATR (14)","61 ticks"],["Open int.","19.4K"]
+    ["Fri settle","1.1186"],["Fri high","1.1235"],["Fri low","1.1156"],["Mon open","1.1174"],
+    ["Mon range","1.1174–1.1186"],["ATR (14)","62 ticks"],["Open int.","18.9K"]
   ],
 
-  levelsDesc: "From M6E Dec '26 daily bars (1 month), the 4-hour tape since Oct 16, and the Oct 16–22 triangle",
+  levelsDesc: "From M6E Dec '26 daily bars (1 month), the 2-hour tape since Oct 28 and the Oct 16–22 triangle",
   // kind: r (resistance) | s (support) | p (pivot) | c (current price) — list top to bottom
   levels: [
-    { kind:"r", price:"1.1279–1.1296", tag:"Resistance · major", label:"Top of the Oct 16–22 triangle. Only a close above it ends the downtrend" },
-    { kind:"r", price:"1.1235–1.1250", tag:"Resistance", label:"The old triangle floor, broken Oct 22. The Oct 23 and Oct 26 highs both stalled here" },
-    { kind:"r", price:"1.1205–1.1218", tag:"Resistance · pivot", label:"Thursday's close-high and Monday's New York breakdown level" },
-    { kind:"c", price:"1.1201", tag:"Last print", label:"Closed 77 ticks off Thursday's low, back above Tuesday's and Wednesday's highs" },
-    { kind:"s", price:"1.1173–1.1176", tag:"Support", label:"Wednesday's close and Thursday's open. The reversal fails below here" },
-    { kind:"s", price:"1.1142–1.1145", tag:"Support", label:"The Oct 27–28 lows, where price based for two days" },
-    { kind:"s", price:"1.1124", tag:"Support · 52-wk low", label:"Thursday's low between 8 AM and noon ET. Rejected the same session" }
+    { kind:"r", price:"1.1279–1.1296", tag:"Resistance · major", label:"Top of the Oct 16–22 triangle. A close above it ends the downtrend" },
+    { kind:"r", price:"1.1235–1.1250", tag:"Resistance · old floor", label:"Broken triangle floor. Rejected Oct 23, Oct 26 and Friday at 1.1235. The 20-day EMA is at 1.1245" },
+    { kind:"r", price:"1.1205–1.1225", tag:"Resistance", label:"Friday's overnight shelf, before New York broke it at 8 AM ET" },
+    { kind:"c", price:"1.1186", tag:"Last print", label:"Flat on Friday's settle in Monday's first hour. The middle of the range" },
+    { kind:"s", price:"1.1156", tag:"Support", label:"Friday's New York low" },
+    { kind:"s", price:"1.1134–1.1145", tag:"Support", label:"The Oct 27–28 lows, where price based for two days" },
+    { kind:"s", price:"1.1124", tag:"Support · 52-wk low", label:"Oct 29 low. A break opens fresh ground with no nearby support" }
   ],
 
-  setupsDesc: "Last plan: the Oct 22 triangle-break short (sell stop 1.1235) triggered that morning and reached T1 1.1195 on Oct 26 and T2 1.1160 on Oct 27 (+$50 / +$93.75 if resting). New plans for Friday below. 1 tick = $1.25, GTC stops. Put the long and the breakdown short in one group. The resistance short is an alternative to the long: it can't share a group with it.",
+  setupsDesc: "Last plan: the Oct 30 reversal long (1.1209) triggered at Friday's open, peaked at 1.1235 and was stopped at 1.1182 (−$33.75 if resting). The plan's record since Oct 1 is 4 wins and 6 losses. Every win was a breakdown sell stop, and both longs lost, so Monday is shorts only. Put the two shorts in one one-cancels-the-other group with GTC stops. 1 tick = $1.25.",
   // side: long | short ; state: ARMED | LIMIT | TRIGGERED | STOPPED OUT | TARGET HIT (any text)
   setups: [
-    { name:"Reversal follow-through long", side:"long", state:"PLAN", entry:"1.1209", stop:"1.1182", t1:"1.1245", t2:"1.1279",
-      note:"Buy stop over Thursday's 1.1205 high, to confirm the outside reversal. Risk 27 ticks ($33.75) · R:R 1.3 / 2.6" },
-    { name:"Failed-reversal short", side:"short", state:"PLAN", entry:"1.1168", stop:"1.1195", t1:"1.1128", t2:"1.1100",
-      note:"Sell stop under Wednesday's 1.1173–1.1176 close zone, so the reversal has failed before it fills. Risk 27 ticks ($33.75) · R:R 1.5 / 2.5" },
-    { name:"Old-floor resistance short", side:"short", state:"PLAN", entry:"1.1240", stop:"1.1265", t1:"1.1200", t2:"1.1175",
-      note:"Sell limit into the broken 1.1235–1.1250 triangle floor, with the trend. Use it instead of the long, not alongside it. Risk 25 ticks ($31.25) · R:R 1.6 / 2.6" }
+    { name:"Range-top short", side:"short", state:"LIMIT", entry:"1.1230", stop:"1.1256", t1:"1.1190", t2:"1.1160",
+      note:"Sell limit just under Friday's 1.1235 high, where the old floor held. Risk 26 ticks ($32.50) · R:R 1.5 / 2.7" },
+    { name:"New-low breakdown short", side:"short", state:"PLAN", entry:"1.1119", stop:"1.1146", t1:"1.1080", t2:"1.1050",
+      note:"Sell stop 5 ticks under the 1.1124 52-week low. The setup type behind all four of the plan's wins. Risk 27 ticks ($33.75) · R:R 1.4 / 2.6" },
+    { name:"Trend-change long", side:"long", state:"ONLY ABOVE 1.1250", entry:"1.1255", stop:"1.1228", t1:"1.1296", t2:"1.1319",
+      note:"Not part of Monday's group. Use it only after a daily close above 1.1250 and the 20-day EMA. Risk 27 ticks ($33.75) · R:R 1.5 / 2.4" }
   ],
 
   chart: {
     title: "21-session range",
-    desc: "M6E Dec '26 daily high/low band with close, Oct 1 – Oct 29",
+    desc: "M6E Dec '26 daily high/low band with close, Oct 5 – Nov 2",
     decimals: 4,           // 2 for stocks, 0 for index futures, 4 for FX futures
     labelEvery: 3,
     bars: [                // oldest → newest; add live:true on an in-progress bar
-      {d:"Oct 1",h:1.1371,l:1.1248,c:1.1268},{d:"Oct 2",h:1.1319,l:1.1255,c:1.1284},{d:"Oct 5",h:1.1295,l:1.1194,c:1.1249},
-      {d:"Oct 6",h:1.1308,l:1.1235,c:1.1293},{d:"Oct 7",h:1.1295,l:1.1196,c:1.1230},{d:"Oct 8",h:1.1257,l:1.1201,c:1.1239},
-      {d:"Oct 9",h:1.1272,l:1.1218,c:1.1232},{d:"Oct 12",h:1.1247,l:1.1181,c:1.1185},{d:"Oct 13",h:1.1233,l:1.1183,c:1.1230},
-      {d:"Oct 14",h:1.1240,l:1.1141,c:1.1182},{d:"Oct 15",h:1.1268,l:1.1183,c:1.1239},{d:"Oct 16",h:1.1296,l:1.1235,c:1.1260},
-      {d:"Oct 19",h:1.1261,l:1.1213,c:1.1238},{d:"Oct 20",h:1.1287,l:1.1230,c:1.1262},{d:"Oct 21",h:1.1266,l:1.1239,c:1.1249},
-      {d:"Oct 22",h:1.1279,l:1.1212,c:1.1243},{d:"Oct 23",h:1.1250,l:1.1208,c:1.1216},{d:"Oct 26",h:1.1249,l:1.1196,c:1.1206},
-      {d:"Oct 27",h:1.1199,l:1.1144,c:1.1157},{d:"Oct 28",h:1.1190,l:1.1134,c:1.1174},{d:"Oct 29",h:1.1205,l:1.1124,c:1.1201}
+      {d:"Oct 5",h:1.1295,l:1.1194,c:1.1249},{d:"Oct 6",h:1.1308,l:1.1235,c:1.1293},{d:"Oct 7",h:1.1295,l:1.1196,c:1.1230},
+      {d:"Oct 8",h:1.1257,l:1.1201,c:1.1239},{d:"Oct 9",h:1.1272,l:1.1218,c:1.1232},{d:"Oct 12",h:1.1247,l:1.1181,c:1.1185},
+      {d:"Oct 13",h:1.1233,l:1.1183,c:1.1230},{d:"Oct 14",h:1.1240,l:1.1141,c:1.1182},{d:"Oct 15",h:1.1268,l:1.1183,c:1.1239},
+      {d:"Oct 16",h:1.1296,l:1.1235,c:1.1260},{d:"Oct 19",h:1.1261,l:1.1213,c:1.1238},{d:"Oct 20",h:1.1287,l:1.1230,c:1.1262},
+      {d:"Oct 21",h:1.1266,l:1.1239,c:1.1249},{d:"Oct 22",h:1.1279,l:1.1212,c:1.1243},{d:"Oct 23",h:1.1250,l:1.1208,c:1.1216},
+      {d:"Oct 26",h:1.1249,l:1.1196,c:1.1206},{d:"Oct 27",h:1.1199,l:1.1144,c:1.1157},{d:"Oct 28",h:1.1190,l:1.1134,c:1.1174},
+      {d:"Oct 29",h:1.1205,l:1.1124,c:1.1182},{d:"Oct 30",h:1.1235,l:1.1156,c:1.1186},{d:"Nov 2",h:1.1186,l:1.1174,c:1.1186,live:true}
     ],
-    refs: [ {p:1.1250,kind:"r"},{p:1.1205,kind:"r"},{p:1.1142,kind:"s"},{p:1.1124,kind:"s"} ]
+    refs: [ {p:1.1250,kind:"r"},{p:1.1235,kind:"r"},{p:1.1156,kind:"s"},{p:1.1124,kind:"s"} ]
   },
 
   technicals: {
-    source: "Computed from IBKR M6E daily bars through Thursday",
+    source: "Computed from IBKR M6E daily bars through Friday's close",
     rating: "DOWNTREND", tone: "bear",
-    summary: "Trend: <strong>DOWN</strong> · Momentum: <strong>OVERSOLD, REVERSAL BAR</strong>",
-    stats: [["RSI 14","35.3"],["Stoch K/D","22.9 / 27.0"],["CCI 20","−141"],["MACD / sig","−0.0064 / −0.0070"],
-            ["ADX / −DI","50.3 / 27.1"],["EMA 20 / 50","1.1251 / 1.1359"],["SMA 50","1.1436"]],
-    note: "The triangle resolved down. RSI fell back from 44 to 35 and price dropped under the 20-day EMA again. ADX at 50 still says trend. Two things argue for a pause: MACD is holding above its signal, and Thursday's bar was an outside reversal. It took out Wednesday's low and high and closed near the top. That's another failed push to a new low, like Oct 14's."
+    summary: "Trend: <strong>DOWN</strong> · Momentum: <strong>OVERSOLD, FLAT</strong>",
+    stats: [["RSI 14","36.0"],["Stoch K/D","31.5 / 26.7"],["CCI 20","−77"],["MACD / sig","−0.0061 / −0.0068"],
+            ["ADX / −DI","49.2 / 24.7"],["EMA 20 / 50","1.1245 / 1.1353"],["SMA 50","1.1425"]],
+    note: "Price is under every average, and Friday's high stalled 10 ticks below the 20-day EMA. ADX near 50 with −DI at twice +DI (25 vs 12) is still a trend. MACD above its signal and a rising Stoch show the selling has slowed, not reversed. Treat bounces into 1.1235–1.1250 as places to sell."
   },
 
-  bias: "<strong>Bearish below 1.1250, but Thursday's reversal needs respect.</strong> The Oct 22 triangle break did its job, reaching 1.1124. Thursday then reversed 81 ticks off the low. Follow-through over <strong class='num'>1.1205</strong> targets the 1.1235–1.1250 old floor, where sellers should return. A drop back under <strong class='num'>1.1173</strong> means the reversal failed and puts 1.1124 back in play.",
+  bias: "<strong>Bearish below 1.1250.</strong> Thursday's outside reversal off 1.1124 ran out of steam at <strong class='num'>1.1235</strong>, the bottom of the old triangle floor. Sell the top of the 1.1124–1.1235 range or a break of <strong class='num'>1.1124</strong>. Only a daily close above <strong class='num'>1.1250</strong> and the 20-day EMA would bring longs back into the plan.",
 
   specsTitle: "Contract — M6E Dec '26",
-  specs: [["Size","€12,500"],["Tick","0.0001 = $1.25"],["ATR (14) $","≈ $76 / contract"],
-          ["Hist. vol (30d)","4.8% · ~34 ticks/day"],["52-wk range","1.1124 – 1.2111"],
-          ["Last trade","Mon Dec 14 2026"],["Hours","Sun–Fri 5:00 PM – 4:00 PM CT"]],
+  specs: [["Size","€12,500"],["Tick","0.0001 = $1.25"],["ATR (14) $","≈ $78 / contract"],
+          ["Hist. vol (30d)","4.6% · ~33 ticks/day"],["52-wk range","1.1124 – 1.2111"],
+          ["Last trade","Mon Dec 14 2026"],["Hours","Sun–Fri 5:00 PM – 4:00 PM CT (6 PM ET open)"]],
 
-  footer: "Updated ~5:54 PM ET, Thu Oct 29 2026 · Prices and bars: Interactive Brokers (M6E Dec '26) · Technicals computed from IBKR daily bars · Not investment advice"
+  footer: "Updated ~7:57 PM ET, Sun Nov 1 2026 (Mon 11/2 Globex session) · Prices and bars: Interactive Brokers (M6E Dec '26, real-time) · Technicals computed from IBKR daily bars · Not investment advice"
 };
 /* ===================== END DATA — no edits needed below ===================== */
 
