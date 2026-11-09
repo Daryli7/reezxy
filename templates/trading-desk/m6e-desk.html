@@ -152,72 +152,72 @@ var DESK = {
   symbol: "M6E",
   name: "Micro EUR/USD futures · Dec '26 (M6EZ6)",
   venue: "CME · Globex",
-  headline: { tone: "bear", text: "▼ The breakout above 1.1256 failed (high 1.1292), then Friday fell 84 ticks. 33 ticks above the 52-week low" }, // tone: bull | bear | neutral
-  price: "1.1157",
-  change: { dir: "down", text: "−0.0084 (−0.75%) · −84 ticks Friday" },            // dir: up | down
-  status: { live: false, text: "Closed for the weekend · reopens Sun 6:00 PM ET" },
+  headline: { tone: "neutral", text: "▲ Monday won back 82 of Friday's 84 ticks but stayed inside Friday's range, under the 1.1256 cancel line. US CPI Tuesday 8:30 AM ET" }, // tone: bull | bear | neutral
+  price: "1.1238",
+  change: { dir: "up", text: "+0.0081 (+0.73%) since Friday's close · Monday +82 ticks" },            // dir: up | down
+  status: { live: true, text: "Tuesday session open since 6:00 PM ET · CPI at 8:30 AM ET" },
   stats: [
-    ["Fri open","1.1234"],["Fri high","1.1251"],["Fri low","1.1148"],["Week high","1.1292"],
-    ["Week chg","−29 ticks"],["ATR (14)","64 ticks"],["ADX","38.4"]
+    ["Mon open","1.1163"],["Mon high","1.1241"],["Mon low","1.1157"],["Mon chg","+82 ticks"],
+    ["Fri range","1.1148–1.1251"],["ATR (14)","66 ticks"],["ADX","37.1"]
   ],
 
-  levelsDesc: "From M6E Dec '26 daily bars (1 month) and the 4-hour tape for Nov 2–6",
+  levelsDesc: "From M6E Dec '26 daily bars (1 month) and the hourly tape for Nov 6–9",
   // kind: r (resistance) | s (support) | p (pivot) | c (current price) — list top to bottom
   levels: [
-    { kind:"r", price:"1.1283–1.1292", tag:"Resistance · major", label:"Wednesday's and Thursday's breakout highs. Neither day closed above 1.1256" },
-    { kind:"r", price:"1.1235–1.1256", tag:"Resistance · ceiling", label:"The old ceiling, back above price. A daily close over 1.1256 cancels the bearish read" },
-    { kind:"r", price:"1.1209–1.1217", tag:"Resistance", label:"Friday's overnight highs before the New York drop" },
-    { kind:"c", price:"1.1157", tag:"Last print", label:"Friday's close, 9 ticks off the low after an 84-tick down day" },
-    { kind:"s", price:"1.1148", tag:"Support", label:"Friday's New York low" },
-    { kind:"s", price:"1.1124", tag:"Support · 52-wk low", label:"Oct 29 low. The trigger for the week's only setup" },
+    { kind:"r", price:"1.1283–1.1292", tag:"Resistance · major", label:"Last week's breakout highs (Nov 4–5). Neither day closed above 1.1256" },
+    { kind:"r", price:"1.1251–1.1256", tag:"Resistance · cancel line", label:"Friday's high and the old ceiling top. A daily close above 1.1256 cancels the short plan" },
+    { kind:"r", price:"1.1241", tag:"Resistance", label:"Monday's high, reached by 3 PM ET after a 14-tick push from 2:30 PM ET" },
+    { kind:"c", price:"1.1238", tag:"Last print", label:"Tuesday session, 1 tick under Monday's 1.1239 close" },
+    { kind:"s", price:"1.1199–1.1208", tag:"Support", label:"Monday's base from the London open to mid-morning New York" },
+    { kind:"s", price:"1.1148–1.1157", tag:"Support · range low", label:"Friday's low and Monday's opening low. The bottom of the inside day" },
+    { kind:"s", price:"1.1124", tag:"Support · 52-wk low", label:"Oct 29 low. The trigger for the only setup" },
     { kind:"s", price:"1.1080", tag:"Support · measured", label:"T1 for the breakdown. Nothing has traded here in over a year" }
   ],
 
-  setupsDesc: "Since Oct 1, breakdown sell stops are 4 wins from 7 trades (+$82.50). Fades at resistance are 0 for 3 and longs 0 for 2 (−$167.50 combined), so the plan now runs one setup type only. Place it as a single bracket with a GTC stop. The other two cards show how last week's plan played out. 1 tick = $1.25.",
+  setupsDesc: "Since Oct 1, breakdown sell stops are 4 wins from 7 trades (+$82.50). Fades and longs are 0 for 5 (−$167.50), so the plan runs one setup type only, one at a time. Monday didn't reach it. With US CPI due Tuesday at 8:30 AM ET, don't add a closer short before the number. 1 tick = $1.25.",
   // side: long | short ; state: ARMED | LIMIT | TRIGGERED | STOPPED OUT | TARGET HIT (any text)
   setups: [
     { name:"52-week-low breakdown short", side:"short", state:"PLAN", entry:"1.1119", stop:"1.1146", t1:"1.1080", t2:"1.1050",
-      note:"Sell stop 5 ticks under the 1.1124 low, 38 ticks below Friday's close, so it may take days to trigger. Cancel it if a day closes back above 1.1256. Risk 27 ticks ($33.75) · R:R 1.4 / 2.6" },
-    { name:"Last week: ceiling short", side:"short", state:"STOPPED OUT", entry:"1.1238", stop:"1.1266", t1:"1.1195", t2:"1.1170",
-      note:"Filled and stopped in the same 4-hour bar on Tuesday evening, as price broke out to 1.1281 (−$35). Fades are now retired from the plan" },
-    { name:"Last week: rising-lows break short", side:"short", state:"T1 HIT (IF ALONE)", entry:"1.1188", stop:"1.1215", t1:"1.1150", t2:"1.1124",
-      note:"Cancelled by the group when the ceiling short filled. On its own it triggered overnight into Friday and reached T1 in the New York morning (+$47.50)" }
+      note:"Sell stop 5 ticks under the 1.1124 low, 119 ticks below the last print. Monday's 1.1157 low didn't reach it. Place it as a single bracket with a GTC stop. Cancel if a day closes above 1.1256. Risk 27 ticks ($33.75) · R:R 1.4 / 2.6" },
+    { name:"Skipped: Monday-base break short", side:"short", state:"SKIP · RISK TOO BIG", entry:"1.1197", stop:"1.1244", t1:"1.1157", t2:"1.1124",
+      note:"The nearest short with a stop above Monday's 1.1241 high. Its 47-tick risk ($58.75) is well over the 27-tick limit, and the reward is only 0.9R / 1.6R. Shown to mark the level, not as a trade" }
   ],
 
   chart: {
     title: "21-session range",
-    desc: "M6E Dec '26 daily high/low band with close, Oct 9 – Nov 6",
+    desc: "M6E Dec '26 daily high/low band with close, Oct 13 – Nov 10 (Tuesday live)",
     decimals: 4,           // 2 for stocks, 0 for index futures, 4 for FX futures
     labelEvery: 3,
     bars: [                // oldest → newest; add live:true on an in-progress bar
-      {d:"Oct 9",h:1.1272,l:1.1218,c:1.1232},{d:"Oct 12",h:1.1247,l:1.1181,c:1.1185},{d:"Oct 13",h:1.1233,l:1.1183,c:1.1230},
+      {d:"Oct 13",h:1.1233,l:1.1183,c:1.1230},
       {d:"Oct 14",h:1.1240,l:1.1141,c:1.1182},{d:"Oct 15",h:1.1268,l:1.1183,c:1.1239},{d:"Oct 16",h:1.1296,l:1.1235,c:1.1260},
       {d:"Oct 19",h:1.1261,l:1.1213,c:1.1238},{d:"Oct 20",h:1.1287,l:1.1230,c:1.1262},{d:"Oct 21",h:1.1266,l:1.1239,c:1.1249},
       {d:"Oct 22",h:1.1279,l:1.1212,c:1.1243},{d:"Oct 23",h:1.1250,l:1.1208,c:1.1216},{d:"Oct 26",h:1.1249,l:1.1196,c:1.1206},
       {d:"Oct 27",h:1.1199,l:1.1144,c:1.1157},{d:"Oct 28",h:1.1190,l:1.1134,c:1.1174},{d:"Oct 29",h:1.1205,l:1.1124,c:1.1182},
       {d:"Oct 30",h:1.1235,l:1.1156,c:1.1186},{d:"Nov 2",h:1.1256,l:1.1174,c:1.1213},{d:"Nov 3",h:1.1225,l:1.1193,c:1.1209},
-      {d:"Nov 4",h:1.1292,l:1.1205,c:1.1241},{d:"Nov 5",h:1.1285,l:1.1221,c:1.1241},{d:"Nov 6",h:1.1251,l:1.1148,c:1.1157}
+      {d:"Nov 4",h:1.1292,l:1.1205,c:1.1241},{d:"Nov 5",h:1.1285,l:1.1221,c:1.1241},{d:"Nov 6",h:1.1251,l:1.1148,c:1.1157},
+      {d:"Nov 9",h:1.1241,l:1.1157,c:1.1239},{d:"Nov 10",h:1.1240,l:1.1235,c:1.1238,live:true}
     ],
-    refs: [ {p:1.1256,kind:"r"},{p:1.1235,kind:"r"},{p:1.1148,kind:"s"},{p:1.1124,kind:"s"} ]
+    refs: [ {p:1.1256,kind:"r"},{p:1.1241,kind:"r"},{p:1.1148,kind:"s"},{p:1.1124,kind:"s"} ]
   },
 
   technicals: {
-    source: "Computed from IBKR M6E daily bars through Friday's close",
-    rating: "DOWNTREND", tone: "bear",
-    summary: "Trend: <strong>DOWN, CHOPPIER</strong> · Momentum: <strong>ROLLING OVER</strong>",
-    stats: [["RSI 14","35.8"],["Stoch K/D","52.4 / 57.1"],["CCI 20","−82"],["MACD / sig","−0.0043 / −0.0053"],
-            ["ADX / −DI","38.4 / 23.9"],["EMA 20 / 50","1.1231 / 1.1327"],["SMA 50","1.1375"]],
-    note: "Price closed back under the 20-day EMA (1.1231), and Stoch K turned down through D. RSI fell from 41 to 36. MACD is still above its signal, a leftover from the bounce. ADX dropped from 50 to 38: the trend is still down, but with wider two-way swings, like this week's 1.1148–1.1292 range."
+    source: "Computed from IBKR M6E daily bars through Monday's close",
+    rating: "DOWNTREND · BOUNCE", tone: "neutral",
+    summary: "Trend: <strong>DOWN</strong> · Momentum: <strong>RECOVERING</strong>",
+    stats: [["RSI 14","48.0"],["Stoch K/D","52.6 / 55.8"],["CCI 20","−13"],["MACD / sig","−0.0037 / −0.0050"],
+            ["ADX / −DI","37.1 / 21.8"],["EMA 20 / 50","1.1232 / 1.1324"],["SMA 50","1.1367"]],
+    note: "Monday's close (1.1239) is back above the 20-day EMA (1.1232), and RSI jumped from 36 to 48. MACD is rising above its signal. But the bounce was an inside day, so ADX barely moved (37.1) and −DI still leads +DI, 21.8 to 14.3. The 50-day EMA is 85 ticks overhead at 1.1324."
   },
 
-  bias: "<strong>Bearish below 1.1256.</strong> Wednesday and Thursday broke out above the ceiling and couldn't close there, then Friday erased the move with an 84-tick drop. A break of <strong class='num'>1.1124</strong> opens 1.1080 and 1.1050. A daily close back above <strong class='num'>1.1256</strong> would undo this read.",
+  bias: "<strong>Bearish below 1.1256, but weaker.</strong> Monday won back 82 of Friday's 84 ticks without leaving Friday's 1.1148–1.1251 range. US CPI at 8:30 AM ET Tuesday is the likeliest thing to break it. A break of <strong class='num'>1.1124</strong> opens 1.1080 and 1.1050. A daily close above <strong class='num'>1.1256</strong> cancels the short and the bearish read.",
 
   specsTitle: "Contract — M6E Dec '26",
-  specs: [["Size","€12,500"],["Tick","0.0001 = $1.25"],["ATR (14) $","≈ $80 / contract"],
-          ["Hist. vol (30d)","~4.6% · ~32 ticks/day (Nov 3)"],["52-wk range","1.1124 – 1.2111"],
+  specs: [["Size","€12,500"],["Tick","0.0001 = $1.25"],["ATR (14) $","≈ $82 / contract"],
+          ["Hist. vol (30d)","~5.3% · ~38 ticks/day (Nov 9)"],["52-wk range","1.1124 – 1.2111"],
           ["Last trade","Mon Dec 14 2026"],["Hours","Sun–Fri 5:00 PM – 4:00 PM CT (6 PM ET open)"]],
 
-  footer: "Updated ~5:30 PM ET, Sat Nov 7 2026 · Prices and bars: Interactive Brokers (M6E Dec '26, Friday close) · Technicals computed from IBKR daily bars · Not investment advice"
+  footer: "Updated ~6:45 PM ET, Mon Nov 9 2026 · Prices and bars: Interactive Brokers (M6E Dec '26) · Technicals computed from IBKR daily bars · CPI calendar: TradingView · Not investment advice"
 };
 /* ===================== END DATA — no edits needed below ===================== */
 
