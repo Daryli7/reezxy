@@ -434,9 +434,9 @@ f_sessLevels(string sess) =>
 //──────────────────────────────── REPORT PARSING HELPERS
 f_trim(string s) =>
     string r = s
-    while str.length(r) > 0 and (str.startswith(r, " ") or str.startswith(r, "\t"))
+    while str.length(r) > 0 and str.startswith(r, " ")
         r := str.substring(r, 1)
-    while str.length(r) > 0 and (str.endswith(r, " ") or str.endswith(r, "\t") or str.endswith(r, "\r"))
+    while str.length(r) > 0 and str.endswith(r, " ")
         r := str.substring(r, 0, str.length(r) - 1)
     r
 
