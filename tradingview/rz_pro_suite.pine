@@ -34,6 +34,7 @@ repTz      = input.string("America/New_York", "Report timezone", group = G_REP)
 matchMicro = input.bool(true, "Match mini ↔ micro (NQ↔MNQ, ES↔MES…)", group = G_REP)
 showRep    = input.bool(true, "Show report stats panel", group = G_REP)
 autoTp     = input.bool(true, "No TP in row → draw TP1/TP2/TP3 at 1R/2R/3R", group = G_REP)
+untagAll   = input.bool(true, "Rows without @timeframe show on every timeframe", group = G_REP)
 
 showSig  = input.bool(true, "Show signal markers", group = G_SIG)
 onlyKZ   = input.bool(true, "Only take signals inside killzones", group = G_SIG)
@@ -460,6 +461,33 @@ f_symMatch(string s) =>
     bool micro  = matchMicro and str.length(n) > 0 and ("M" + n == root or n == "M" + root)
     direct or micro
 
+// "5m", "5", "15", "1h", "4H", "D", "1D", "W" → seconds (na if unreadable)
+f_tfSec(string raw) =>
+    string t = str.upper(f_trim(raw))
+    int out = na
+    if str.length(t) > 0
+        string unit = str.substring(t, str.length(t) - 1)
+        bool hasUnit = unit == "M" or unit == "H" or unit == "D" or unit == "W" or unit == "S"
+        string numS = hasUnit ? str.substring(t, 0, str.length(t) - 1) : t
+        float n = str.length(numS) == 0 ? 1.0 : str.tonumber(numS)
+        if not na(n)
+            int mult = not hasUnit ? 60 : unit == "S" ? 1 : unit == "M" ? 60 : unit == "H" ? 3600 : unit == "D" ? 86400 : 604800
+            out := int(n * mult)
+    out
+
+// tags like "5m" or "5m|15m"; empty tag → untagAll decides
+f_tfMatch(string tags) =>
+    bool ok = false
+    if str.length(f_trim(tags)) == 0
+        ok := untagAll
+    else
+        array<string> tagArr = str.split(tags, "|")
+        for tg in tagArr
+            int sec = f_tfSec(tg)
+            if not na(sec) and sec == timeframe.in_seconds()
+                ok := true
+    ok
+
 f_dir(string s) =>
     string u = str.upper(f_trim(s))
     u == "LONG" or u == "BUY" or u == "L" or u == "B" ? 1 : u == "SHORT" or u == "SELL" or u == "S" ? -1 : 0
@@ -853,7 +881,14 @@ if barstate.islast
             int dr = f_dir(array.get(f, 1))
             if dr == 0
                 continue      // header or unknown direction
-            if not f_symMatch(array.get(f, 0))
+            // SYMBOL may carry a timeframe tag: M6E1!@5m  or  MNQ1!@1m|5m
+            string symF = array.get(f, 0)
+            string tfTag = ""
+            int at = str.pos(symF, "@")
+            if not na(at)
+                tfTag := str.substring(symF, at + 1)
+                symF := str.substring(symF, 0, at)
+            if not f_symMatch(symF) or not f_tfMatch(tfTag)
                 nOther += 1
                 continue
             float qty = nz(str.tonumber(f_trim(array.get(f, 2))), 1.0)
@@ -954,7 +989,7 @@ if barstate.islast
         f_cell(tRep, 1, 5, nR > 0 ? f_r(sumR) : "—", f_col(sumR), C_BG, R)
         f_cell(tRep, 0, 6, "Open trades / P&L", C_MUT, C_BG, L)
         f_cell(tRep, 1, 6, str.tostring(nOpen) + " / " + f_signed(openUsd, "#,##0.00"), nOpen > 0 ? C_YEL : C_MUT, C_BG, R)
-        f_cell(tRep, 0, 7, "Other sym / bad / before chart", C_MUT, C_BG, L)
+        f_cell(tRep, 0, 7, "Other sym·TF / bad / before chart", C_MUT, C_BG, L)
         f_cell(tRep, 1, 7, str.tostring(nOther) + " / " + str.tostring(nBad) + " / " + str.tostring(nOff), nBad > 0 or nOff > 0 ? C_RED : C_MUT, C_BG, R)
         f_cell(tRep, 0, 8, "RECENT", C_TXT, C_HDR, L)
         f_cell(tRep, 1, 8, "Result", C_TXT, C_HDR, C)

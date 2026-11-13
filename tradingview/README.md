@@ -28,6 +28,7 @@ EURUSD, SELL, 1, 11/13/2026 03:15, 1.08420, 1.08510, 1.08250, 11/13/2026 05:02, 
 ```
 
 - **Symbol matching:** the indicator draws only the rows whose symbol matches the chart, so you can paste the same report on every chart. `MNQ1!`, `MNQZ2026` and `CME_MINI:MNQ1!` all match an MNQ chart. With *Match mini ↔ micro* turned on, `NQ` rows also show on MNQ (and `ES` on MES). Use `*` to show a row on any chart.
+- **Timeframe tags:** add `@` and a timeframe to the symbol to show a row only on that timeframe. For example, `M6E1!@5m` shows only on 5m, `MNQ1!@1m|5m` shows on 1m and 5m, and `6E1!@1h` shows only on 1H. Rows without a tag show on every timeframe. You can switch that off with *Rows without @timeframe show on every timeframe*.
 - **Open trades:** leave EXIT_TIME and EXIT blank. The trade is drawn to the current bar and shows live P&L.
 - **Times** use the *Report timezone* setting (New York by default). The format can be `YYYY-MM-DD HH:MM` or `MM/DD/YYYY HH:MM`.
 - **USD** is calculated as points × the contract's point value × QTY. MNQ is $2 per point, so 50.25 pts × 2 contracts = $201.
