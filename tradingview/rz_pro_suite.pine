@@ -1,0 +1,795 @@
+//@version=6
+// ─────────────────────────────────────────────────────────────────────────────
+//  RZ Pro Suite — Signals · Killzones · DOL · Trade Report
+//
+//  1) Signal engine  : Reversal (sweep + displacement FVG) and Continuation
+//                      (HTF-aligned FVG retrace) signals, back-tested on the
+//                      loaded history with TP1/TP2/TP3 = 1R/2R/3R scale-outs.
+//  2) Killzone stats : win rate & net R per session, live session status.
+//  3) DOL panel      : nearest draws on liquidity (PDH/PDL, session H/L, BSL/SSL).
+//  4) Pro Suite      : 8-point setup checklist with grade.
+//  5) Trade Report   : paste report rows (entries & exits) into the settings.
+//                      Only rows whose SYMBOL matches the chart are drawn, so the
+//                      same report can live on every chart you trade.
+//
+//  Report row format (one trade per line, comma separated):
+//    SYMBOL, DIR, QTY, ENTRY_TIME, ENTRY, STOP, TP(s), EXIT_TIME, EXIT, NOTE
+//    MNQ1!, LONG, 2, 2026-11-12 09:41, 21045.25, 21020.00, 21080/21110, 2026-11-12 10:12, 21095.50, NY Open FVG
+//  • DIR: LONG/BUY or SHORT/SELL      • TP(s): one price or several split by "/"
+//  • Leave EXIT_TIME and EXIT blank for an open trade (drawn to the current bar)
+//  • Times: YYYY-MM-DD HH:MM[:SS] or MM/DD/YYYY HH:MM, in "Report timezone"
+//  • SYMBOL "*" matches every chart. Lines starting with # are ignored.
+// ─────────────────────────────────────────────────────────────────────────────
+indicator("RZ Pro Suite — Signals · Killzones · DOL · Trade Report", "RZ Pro Suite", overlay = true, max_lines_count = 500, max_boxes_count = 500, max_labels_count = 500, max_bars_back = 2000)
+
+//──────────────────────────────── INPUTS
+G_REP = "① Trade Report — paste entries & exits"
+G_SIG = "② Signal Engine"
+G_KZ  = "③ Killzones"
+G_UI  = "④ Panels"
+
+repOn      = input.bool(true, "Draw report trades on chart", group = G_REP)
+repText    = input.text_area("# SYMBOL, DIR, QTY, ENTRY_TIME, ENTRY, STOP, TP(s), EXIT_TIME, EXIT, NOTE\nMNQ1!, LONG, 2, 2026-11-12 09:41, 21045.25, 21020.00, 21080/21110, 2026-11-12 10:12, 21095.50, NY Open FVG", "Report rows", group = G_REP)
+repTz      = input.string("America/New_York", "Report timezone", group = G_REP)
+matchMicro = input.bool(true, "Match mini ↔ micro (NQ↔MNQ, ES↔MES…)", group = G_REP)
+showRep    = input.bool(true, "Show report stats panel", group = G_REP)
+
+showSig  = input.bool(true, "Show signal markers", group = G_SIG)
+onlyKZ   = input.bool(true, "Only take signals inside killzones", group = G_SIG)
+swingLen = input.int(5, "Swing length (pivot bars)", minval = 2, group = G_SIG)
+sweepLb  = input.int(15, "Bars a sweep stays valid", minval = 2, group = G_SIG)
+dispMult = input.float(1.2, "Displacement: body ≥ x ATR", step = 0.1, group = G_SIG)
+atrLen   = input.int(14, "ATR length", group = G_SIG)
+drLen    = input.int(100, "Dealing range lookback", minval = 10, group = G_SIG)
+maxBars  = input.int(120, "Max bars in a trade", minval = 5, group = G_SIG)
+htfTf    = input.timeframe("60", "HTF bias timeframe", group = G_SIG)
+smtSym   = input.symbol("CME_MINI:MES1!", "SMT comparison symbol", group = G_SIG)
+smtLen   = input.int(20, "SMT lookback", minval = 5, group = G_SIG)
+
+kzTz   = input.string("America/New_York", "Killzone timezone", group = G_KZ)
+kzAsia = input.session("2000-2359", "Asia KZ", group = G_KZ)
+kzLon  = input.session("0200-0500", "London KZ", group = G_KZ)
+kzPre  = input.session("0700-0930", "NY Pre-open", group = G_KZ)
+kzOpen = input.session("0930-1100", "NY Open", group = G_KZ)
+kzPM   = input.session("1330-1600", "NY PM KZ", group = G_KZ)
+kzBg   = input.bool(false, "Shade killzones", group = G_KZ)
+
+showStats = input.bool(true, "Signal / killzone stats", inline = "s", group = G_UI)
+statsPos  = input.string("Top Right", "", options = ["Top Left", "Top Center", "Top Right", "Middle Left", "Middle Right", "Bottom Left", "Bottom Center", "Bottom Right"], inline = "s", group = G_UI)
+showDol   = input.bool(true, "DOL panel", inline = "d", group = G_UI)
+dolPos    = input.string("Middle Right", "", options = ["Top Left", "Top Center", "Top Right", "Middle Left", "Middle Right", "Bottom Left", "Bottom Center", "Bottom Right"], inline = "d", group = G_UI)
+showPro   = input.bool(true, "Pro Suite checklist", inline = "p", group = G_UI)
+proPos    = input.string("Bottom Right", "", options = ["Top Left", "Top Center", "Top Right", "Middle Left", "Middle Right", "Bottom Left", "Bottom Center", "Bottom Right"], inline = "p", group = G_UI)
+repPos    = input.string("Top Left", "Report panel position", options = ["Top Left", "Top Center", "Top Right", "Middle Left", "Middle Right", "Bottom Left", "Bottom Center", "Bottom Right"], group = G_UI)
+txtSizeIn = input.string("Small", "Text size", options = ["Tiny", "Small", "Normal"], group = G_UI)
+
+//──────────────────────────────── STYLE
+C_BG    = #0f172a
+C_HDR   = #1e3a5f
+C_HDRD  = #7c2d12
+C_HDRP  = #7f1d1d
+C_TXT   = #e5e7eb
+C_MUT   = #9ca3af
+C_GRN   = #22c55e
+C_RED   = #ef4444
+C_YEL   = #facc15
+C_BRD   = #334155
+
+tSize = txtSizeIn == "Tiny" ? size.tiny : txtSizeIn == "Normal" ? size.normal : size.small
+
+f_pos(string s) =>
+    switch s
+        "Top Left"      => position.top_left
+        "Top Center"    => position.top_center
+        "Top Right"     => position.top_right
+        "Middle Left"   => position.middle_left
+        "Middle Right"  => position.middle_right
+        "Bottom Left"   => position.bottom_left
+        "Bottom Center" => position.bottom_center
+        => position.bottom_right
+
+f_cell(table t, int c, int r, string txt, color tc, color bg, string al) =>
+    table.cell(t, c, r, txt, text_color = tc, bgcolor = bg, text_size = tSize, text_halign = al)
+
+f_r(float r) => na(r) ? "—" : (r >= 0 ? "+" : "") + str.tostring(r, "0.00") + "R"
+f_pct(float a, float b) => b > 0 ? str.tostring(a / b * 100, "0") + "%" : "—"
+f_col(float v) => na(v) ? C_MUT : v > 0 ? C_GRN : v < 0 ? C_RED : C_MUT
+f_signed(float v, string fmt) => (v >= 0 ? "+" : "") + str.tostring(v, fmt)
+f_bias(int b) => b == 1 ? "Bullish" : b == -1 ? "Bearish" : "Neutral"
+f_biasCol(int b) => b == 1 ? C_GRN : b == -1 ? C_RED : C_MUT
+f_tfLbl(string tf) =>
+    s = timeframe.in_seconds(tf)
+    s >= 86400 ? tf : s >= 3600 ? str.tostring(s / 3600, "0") + "H" : str.tostring(s / 60, "0") + "m"
+
+//──────────────────────────────── KILLZONES & TIME
+f_in(string s) => not na(time(timeframe.period, s, kzTz))
+
+inAsia = f_in(kzAsia)
+inLon  = f_in(kzLon)
+inPre  = f_in(kzPre)
+inOpen = f_in(kzOpen)
+inPM   = f_in(kzPM)
+kzIdx  = inAsia ? 0 : inLon ? 1 : inPre ? 2 : inOpen ? 3 : inPM ? 4 : -1
+var KZ_NAMES = array.from("Asia KZ", "London KZ", "NY Pre-open", "NY Open", "NY PM KZ")
+
+sb1 = f_in("0300-0400")
+sb2 = f_in("1000-1100")
+sb3 = f_in("1400-1500")
+hNY = hour(time, kzTz)
+mNY = minute(time, kzTz)
+inMacro = hNY >= 8 and hNY < 16 and (mNY >= 50 or mNY < 10)
+timeOK  = sb1 or sb2 or sb3 or inMacro
+
+bgcolor(kzBg and kzIdx == 0 ? color.new(color.purple, 92) : kzBg and kzIdx == 1 ? color.new(color.blue, 92) : kzBg and kzIdx == 2 ? color.new(color.gray, 94) : kzBg and kzIdx == 3 ? color.new(color.orange, 92) : kzBg and kzIdx == 4 ? color.new(color.teal, 92) : na, title = "Killzone shading")
+
+//──────────────────────────────── CORE SERIES
+atr  = ta.atr(atrLen)
+body = math.abs(close - open)
+dispBull = close > open and body >= dispMult * atr
+dispBear = close < open and body >= dispMult * atr
+
+drHi  = ta.highest(high, drLen)
+drLo  = ta.lowest(low, drLen)
+drPct = drHi > drLo ? (close - drLo) / (drHi - drLo) * 100 : 50.0
+
+swLo = ta.lowest(low, swingLen * 2)
+swHi = ta.highest(high, swingLen * 2)
+
+//──────────────────────────────── SWINGS, SWEEPS, STRUCTURE
+ph = ta.pivothigh(high, swingLen, swingLen)
+pl = ta.pivotlow(low, swingLen, swingLen)
+
+var float lastSH  = na
+var float lastSL  = na
+var bool  shTaken = true
+var bool  slTaken = true
+var array<float> bslArr = array.new<float>()
+var array<float> sslArr = array.new<float>()
+
+if not na(ph)
+    lastSH  := ph
+    shTaken := false
+    array.push(bslArr, ph)
+    if array.size(bslArr) > 12
+        array.shift(bslArr)
+if not na(pl)
+    lastSL  := pl
+    slTaken := false
+    array.push(sslArr, pl)
+    if array.size(sslArr) > 12
+        array.shift(sslArr)
+
+bearSweep = not shTaken and high > lastSH and close < lastSH
+bullSweep = not slTaken and low < lastSL and close > lastSL
+if not shTaken and high > lastSH
+    shTaken := true
+if not slTaken and low < lastSL
+    slTaken := true
+
+// remove liquidity that has been traded through
+if array.size(bslArr) > 0
+    for i = array.size(bslArr) - 1 to 0
+        if high > array.get(bslArr, i)
+            array.remove(bslArr, i)
+if array.size(sslArr) > 0
+    for i = array.size(sslArr) - 1 to 0
+        if low < array.get(sslArr, i)
+            array.remove(sslArr, i)
+
+var int tfBias = 0
+if not na(lastSH) and close > lastSH
+    tfBias := 1
+else if not na(lastSL) and close < lastSL
+    tfBias := -1
+
+var int   bullSwBar = na
+var float bullSwExt = na
+var int   bearSwBar = na
+var float bearSwExt = na
+if bullSweep
+    bullSwBar := bar_index
+    bullSwExt := low
+else if not na(bullSwBar)
+    bullSwExt := math.min(bullSwExt, low)
+if bearSweep
+    bearSwBar := bar_index
+    bearSwExt := high
+else if not na(bearSwBar)
+    bearSwExt := math.max(bearSwExt, high)
+recentBullSw = not na(bullSwBar) and bar_index - bullSwBar <= sweepLb
+recentBearSw = not na(bearSwBar) and bar_index - bearSwBar <= sweepLb
+
+//──────────────────────────────── FVG / iFVG / CISD
+bullFvgNow = low > high[2]
+bearFvgNow = high < low[2]
+
+var float bFvgTop  = na
+var float bFvgBot  = na
+var int   bFvgBar  = na
+var bool  bFvgUsed = true
+var float sFvgTop  = na
+var float sFvgBot  = na
+var int   sFvgBar  = na
+var bool  sFvgUsed = true
+
+bearIfvg = not na(bFvgBot) and close < bFvgBot   // bullish FVG closed through → bearish inversion
+bullIfvg = not na(sFvgTop) and close > sFvgTop   // bearish FVG closed through → bullish inversion
+if bearIfvg
+    bFvgTop := na
+    bFvgBot := na
+if bullIfvg
+    sFvgTop := na
+    sFvgBot := na
+
+cisdBull = dispBull or bullIfvg
+cisdBear = dispBear or bearIfvg
+
+//──────────────────────────────── HTF CONTEXT
+f_htfBias() =>
+    e20 = ta.ema(close, 20)
+    e50 = ta.ema(close, 50)
+    int b = close > e50 and e20 > e50 ? 1 : close < e50 and e20 < e50 ? -1 : 0
+    b[1]
+
+f_htfFvg() =>
+    var float bt = na
+    var float bb = na
+    var float st = na
+    var float sb = na
+    if not na(bb) and close < bb
+        bt := na
+        bb := na
+    if not na(st) and close > st
+        st := na
+        sb := na
+    if low > high[2]
+        bt := low
+        bb := high[2]
+    if high < low[2]
+        st := low[2]
+        sb := high
+    [bt, bb, st, sb]
+
+htfB = nz(request.security(syminfo.tickerid, htfTf, f_htfBias(), lookahead = barmerge.lookahead_on))
+[hBT, hBB, hST, hSB] = request.security(syminfo.tickerid, htfTf, f_htfFvg())
+[pdh, pdl] = request.security(syminfo.tickerid, "D", [high[1], low[1]], lookahead = barmerge.lookahead_on)
+
+touchBullPda = (not na(bFvgTop) and low <= bFvgTop and close >= bFvgBot) or (not na(hBT) and low <= hBT and close >= hBB)
+touchBearPda = (not na(sFvgBot) and high >= sFvgBot and close <= sFvgTop) or (not na(hSB) and high >= hSB and close <= hST)
+
+//──────────────────────────────── SMT
+[smtH, smtL] = request.security(smtSym, timeframe.period, [high, low])
+llPrev  = ta.lowest(low, smtLen)[1]
+hhPrev  = ta.highest(high, smtLen)[1]
+sLLPrev = ta.lowest(smtL, smtLen)[1]
+sHHPrev = ta.highest(smtH, smtLen)[1]
+bullSmtNow = low < llPrev and smtL > sLLPrev     // we made a lower low, they didn't
+bearSmtNow = high > hhPrev and smtH < sHHPrev    // we made a higher high, they didn't
+
+bsBullSw   = ta.barssince(bullSweep)
+bsBearSw   = ta.barssince(bearSweep)
+bsBullPda  = ta.barssince(touchBullPda)
+bsBearPda  = ta.barssince(touchBearPda)
+bsCisdBull = ta.barssince(cisdBull)
+bsCisdBear = ta.barssince(cisdBear)
+bsBullSmt  = ta.barssince(bullSmtNow)
+bsBearSmt  = ta.barssince(bearSmtNow)
+
+//──────────────────────────────── SIGNALS
+kzOK = not onlyKZ or kzIdx >= 0
+
+revLong   = recentBullSw and dispBull and bullFvgNow
+revShort  = recentBearSw and dispBear and bearFvgNow
+contLong  = htfB == 1 and tfBias == 1 and not bFvgUsed and not na(bFvgTop) and bar_index > bFvgBar and low <= bFvgTop and close > bFvgTop and close > open
+contShort = htfB == -1 and tfBias == -1 and not sFvgUsed and not na(sFvgBot) and bar_index > sFvgBar and high >= sFvgBot and close < sFvgBot and close < open
+
+// a FVG is only good for one retest
+if not na(bFvgTop) and bar_index > bFvgBar and low <= bFvgTop
+    bFvgUsed := true
+if not na(sFvgBot) and bar_index > sFvgBar and high >= sFvgBot
+    sFvgUsed := true
+
+// register FVGs formed on this bar (after the retest check above)
+if bullFvgNow
+    bFvgTop  := low
+    bFvgBot  := high[2]
+    bFvgBar  := bar_index
+    bFvgUsed := false
+if bearFvgNow
+    sFvgTop  := low[2]
+    sFvgBot  := high
+    sFvgBar  := bar_index
+    sFvgUsed := false
+
+//──────────────────────────────── TRADE SIMULATION (1/3 off at 1R, 2R, 3R; BE after TP1)
+var bool  tOn  = false
+var int   tDir = 0
+var int   tTyp = 0      // 0 = reversal, 1 = continuation
+var int   tKz  = -1
+var float tEnt = na
+var float tSL  = na
+var float tRsk = na
+var int   tBar = na
+var bool  tTp1 = false
+var bool  tTp2 = false
+var bool  tTp3 = false
+
+var array<float> sTrd = array.new<float>(2, 0.0)
+var array<float> sTp1 = array.new<float>(2, 0.0)
+var array<float> sTp2 = array.new<float>(2, 0.0)
+var array<float> sTp3 = array.new<float>(2, 0.0)
+var array<float> sStp = array.new<float>(2, 0.0)
+var array<float> sNet = array.new<float>(2, 0.0)
+var array<float> kTrd = array.new<float>(5, 0.0)
+var array<float> kWin = array.new<float>(5, 0.0)
+var array<float> kNet = array.new<float>(5, 0.0)
+
+float closedR  = na
+bool  fullStop = false
+if tOn and bar_index > tBar
+    float lv1 = tEnt + tDir * tRsk
+    float lv2 = tEnt + 2 * tDir * tRsk
+    float lv3 = tEnt + 3 * tDir * tRsk
+    float curStop = tTp1 ? tEnt : tSL
+    bool hitStop = tDir == 1 ? low <= curStop : high >= curStop
+    if hitStop
+        closedR  := (tTp1 ? 1.0 / 3 : -1.0) + (tTp2 ? 2.0 / 3 : 0.0)
+        fullStop := not tTp1
+    else
+        if not tTp1 and (tDir == 1 ? high >= lv1 : low <= lv1)
+            tTp1 := true
+        if not tTp2 and (tDir == 1 ? high >= lv2 : low <= lv2)
+            tTp2 := true
+        if not tTp3 and (tDir == 1 ? high >= lv3 : low <= lv3)
+            tTp3 := true
+        if tTp3
+            closedR := 2.0
+        else if bar_index - tBar >= maxBars
+            float rem = tTp2 ? 1.0 / 3 : tTp1 ? 2.0 / 3 : 1.0
+            closedR := (tTp1 ? 1.0 / 3 : 0.0) + (tTp2 ? 2.0 / 3 : 0.0) + rem * tDir * (close - tEnt) / tRsk
+
+if not na(closedR)
+    array.set(sTrd, tTyp, array.get(sTrd, tTyp) + 1)
+    if tTp1
+        array.set(sTp1, tTyp, array.get(sTp1, tTyp) + 1)
+    if tTp2
+        array.set(sTp2, tTyp, array.get(sTp2, tTyp) + 1)
+    if tTp3
+        array.set(sTp3, tTyp, array.get(sTp3, tTyp) + 1)
+    if fullStop
+        array.set(sStp, tTyp, array.get(sStp, tTyp) + 1)
+    array.set(sNet, tTyp, array.get(sNet, tTyp) + closedR)
+    if tKz >= 0
+        array.set(kTrd, tKz, array.get(kTrd, tKz) + 1)
+        if tTp1
+            array.set(kWin, tKz, array.get(kWin, tKz) + 1)
+        array.set(kNet, tKz, array.get(kNet, tKz) + closedR)
+    tOn := false
+
+bool newLong  = false
+bool newShort = false
+bool newRev   = false
+if not tOn and kzOK and (revLong or revShort or contLong or contShort)
+    bool  goLong = revLong or contLong
+    bool  isRev  = goLong ? revLong : revShort
+    float stp    = goLong ? (isRev ? bullSwExt : bFvgBot) - 0.1 * atr : (isRev ? bearSwExt : sFvgTop) + 0.1 * atr
+    if not na(stp) and (goLong ? stp < close : stp > close)
+        tOn  := true
+        tDir := goLong ? 1 : -1
+        tTyp := isRev ? 0 : 1
+        tKz  := kzIdx
+        tEnt := close
+        tSL  := stp
+        tRsk := math.abs(close - stp)
+        tBar := bar_index
+        tTp1 := false
+        tTp2 := false
+        tTp3 := false
+        newLong  := goLong
+        newShort := not goLong
+        newRev   := isRev
+        if isRev and goLong
+            bullSwBar := na
+        if isRev and not goLong
+            bearSwBar := na
+
+plotshape(showSig and newLong and newRev, "REV long", shape.triangleup, location.belowbar, C_GRN, text = "REV", textcolor = C_GRN, size = size.tiny)
+plotshape(showSig and newLong and not newRev, "CONT long", shape.triangleup, location.belowbar, color.new(C_GRN, 35), text = "CONT", textcolor = color.new(C_GRN, 35), size = size.tiny)
+plotshape(showSig and newShort and newRev, "REV short", shape.triangledown, location.abovebar, C_RED, text = "REV", textcolor = C_RED, size = size.tiny)
+plotshape(showSig and newShort and not newRev, "CONT short", shape.triangledown, location.abovebar, color.new(C_RED, 35), text = "CONT", textcolor = color.new(C_RED, 35), size = size.tiny)
+
+alertcondition(newLong, "RZ long signal", "RZ Pro Suite: LONG signal on {{ticker}} @ {{close}}")
+alertcondition(newShort, "RZ short signal", "RZ Pro Suite: SHORT signal on {{ticker}} @ {{close}}")
+
+//──────────────────────────────── SESSION LEVELS (for DOL)
+f_sessLevels(string sess) =>
+    bool inS = not na(time(timeframe.period, sess, kzTz))
+    var float h  = na
+    var float l  = na
+    var float dh = na
+    var float dl = na
+    if inS and not inS[1]
+        h := high
+        l := low
+    else if inS
+        h := math.max(h, high)
+        l := math.min(l, low)
+    if not inS and inS[1]
+        dh := h
+        dl := l
+    [dh, dl]
+
+[asiaH, asiaL] = f_sessLevels(kzAsia)
+[lonH, lonL]   = f_sessLevels(kzLon)
+[nyamH, nyamL] = f_sessLevels("0930-1200")
+
+//──────────────────────────────── REPORT PARSING HELPERS
+f_trim(string s) =>
+    string r = s
+    while str.length(r) > 0 and (str.startswith(r, " ") or str.startswith(r, "\t"))
+        r := str.substring(r, 1)
+    while str.length(r) > 0 and (str.endswith(r, " ") or str.endswith(r, "\t") or str.endswith(r, "\r"))
+        r := str.substring(r, 0, str.length(r) - 1)
+    r
+
+f_norm(string s) =>
+    string u = str.upper(f_trim(s))
+    int p = str.pos(u, ":")
+    if not na(p)
+        u := str.substring(u, p + 1)
+    u := str.replace_all(u, "/", "")
+    u := str.replace_all(u, "1!", "")
+    u := str.replace_all(u, "2!", "")
+    u := str.replace_all(u, "!", "")
+    u
+
+f_symMatch(string s) =>
+    string n    = f_norm(s)
+    string root = str.upper(syminfo.root)
+    string tick = f_norm(syminfo.ticker)
+    bool direct = n == "*" or n == "ANY" or n == root or n == tick
+    bool micro  = matchMicro and str.length(n) > 0 and ("M" + n == root or n == "M" + root)
+    direct or micro
+
+f_dir(string s) =>
+    string u = str.upper(f_trim(s))
+    u == "LONG" or u == "BUY" or u == "L" or u == "B" ? 1 : u == "SHORT" or u == "SELL" or u == "S" ? -1 : 0
+
+f_parseTime(string raw) =>
+    string s = str.replace_all(f_trim(raw), "T", " ")
+    int result = na
+    if str.length(s) > 0
+        float asNum = str.tonumber(s)
+        if not na(asNum)
+            result := int(asNum)    // unix milliseconds
+        else
+            array<string> parts = str.split(s, " ")
+            string dPart = ""
+            string tPart = ""
+            for p in parts
+                if str.length(p) > 0
+                    if dPart == ""
+                        dPart := p
+                    else if tPart == ""
+                        tPart := p
+            if dPart != "" and tPart != ""
+                bool us = str.contains(dPart, "/")
+                array<string> d  = str.split(dPart, us ? "/" : "-")
+                array<string> hm = str.split(tPart, ":")
+                if array.size(d) == 3 and array.size(hm) >= 2
+                    float a0 = str.tonumber(array.get(d, 0))
+                    float a1 = str.tonumber(array.get(d, 1))
+                    float a2 = str.tonumber(array.get(d, 2))
+                    float hh = str.tonumber(array.get(hm, 0))
+                    float mi = str.tonumber(array.get(hm, 1))
+                    float ss = array.size(hm) >= 3 ? str.tonumber(array.get(hm, 2)) : 0.0
+                    if not (na(a0) or na(a1) or na(a2) or na(hh) or na(mi))
+                        int yy = us ? int(a2) : int(a0)
+                        int mo = us ? int(a0) : int(a1)
+                        int dd = us ? int(a1) : int(a2)
+                        if yy < 100
+                            yy += 2000
+                        result := timestamp(repTz, yy, mo, dd, int(hh), int(mi), int(nz(ss)))
+    result
+
+f_addLvl(array<string> names, array<float> prices, string n, float p) =>
+    if not na(p)
+        array.push(names, n)
+        array.push(prices, p)
+
+//──────────────────────────────── PANELS & DRAWINGS (last bar only)
+var table tStats = table.new(f_pos(statsPos), 4, 14, bgcolor = C_BG, frame_color = C_BRD, frame_width = 1, border_color = C_BRD, border_width = 1)
+var table tDol   = table.new(f_pos(dolPos), 3, 5, bgcolor = C_BG, frame_color = C_BRD, frame_width = 1, border_color = C_BRD, border_width = 1)
+var table tPro   = table.new(f_pos(proPos), 2, 13, bgcolor = C_BG, frame_color = C_BRD, frame_width = 1, border_color = C_BRD, border_width = 1)
+var table tRep   = table.new(f_pos(repPos), 2, 16, bgcolor = C_BG, frame_color = C_BRD, frame_width = 1, border_color = C_BRD, border_width = 1)
+var bool  merged = false
+
+var array<line>  rpLines  = array.new<line>()
+var array<box>   rpBoxes  = array.new<box>()
+var array<label> rpLabels = array.new<label>()
+var array<line>  enLines  = array.new<line>()
+
+L = text.align_left
+C = text.align_center
+R = text.align_right
+
+if barstate.islast
+    // ── setup direction used by DOL + checklist
+    int dir = htfB != 0 ? htfB : tfBias
+
+    // ── DOL candidates
+    array<string> dNames = array.new<string>()
+    array<float>  dPrice = array.new<float>()
+    f_addLvl(dNames, dPrice, "PDH", pdh)
+    f_addLvl(dNames, dPrice, "PDL", pdl)
+    f_addLvl(dNames, dPrice, "Asia H", asiaH)
+    f_addLvl(dNames, dPrice, "Asia L", asiaL)
+    f_addLvl(dNames, dPrice, "London H", lonH)
+    f_addLvl(dNames, dPrice, "London L", lonL)
+    f_addLvl(dNames, dPrice, "NY AM H", nyamH)
+    f_addLvl(dNames, dPrice, "NY AM L", nyamL)
+    for v in bslArr
+        f_addLvl(dNames, dPrice, "BSL", v)
+    for v in sslArr
+        f_addLvl(dNames, dPrice, "SSL", v)
+
+    array<string> fNames = array.new<string>()
+    array<float>  fPrice = array.new<float>()
+    array<float>  fDist  = array.new<float>()
+    if array.size(dPrice) > 0
+        for i = 0 to array.size(dPrice) - 1
+            float p = array.get(dPrice, i)
+            int side = p > close ? 1 : -1
+            if dir == 0 or side == dir
+                array.push(fNames, array.get(dNames, i))
+                array.push(fPrice, p)
+                array.push(fDist, math.abs(p - close))
+    array<int> idx = array.size(fDist) > 0 ? array.sort_indices(fDist, order.ascending) : array.new<int>()
+    float nearestDol = array.size(idx) > 0 ? array.get(fDist, array.get(idx, 0)) : na
+
+    if showDol
+        f_cell(tDol, 0, 0, "DOL", C_TXT, C_HDRD, L)
+        f_cell(tDol, 1, 0, "Price", C_TXT, C_HDRD, C)
+        f_cell(tDol, 2, 0, "Dist", C_TXT, C_HDRD, C)
+        for r = 0 to 3
+            if r < array.size(idx)
+                int k = array.get(idx, r)
+                float p = array.get(fPrice, k)
+                bool up = p > close
+                f_cell(tDol, 0, r + 1, (up ? "▲ " : "▼ ") + array.get(fNames, k), up ? C_GRN : C_RED, C_BG, L)
+                f_cell(tDol, 1, r + 1, str.tostring(p, format.mintick), C_TXT, C_BG, R)
+                f_cell(tDol, 2, r + 1, str.tostring(array.get(fDist, k), format.mintick), C_MUT, C_BG, R)
+            else
+                f_cell(tDol, 0, r + 1, "", C_TXT, C_BG, L)
+                f_cell(tDol, 1, r + 1, "", C_TXT, C_BG, R)
+                f_cell(tDol, 2, r + 1, "", C_TXT, C_BG, R)
+
+    // ── Pro Suite checklist
+    if showPro
+        int d = dir != 0 ? dir : (close >= open ? 1 : -1)
+        float estRisk = math.max(d == 1 ? close - swLo : swHi - close, atr * 0.25)
+        bool c1 = d == 1 ? nz(bsBullSw, 9999) <= 30 : nz(bsBearSw, 9999) <= 30
+        bool c2 = d == 1 ? nz(bsBullPda, 9999) <= 10 : nz(bsBearPda, 9999) <= 10
+        bool c3 = d == 1 ? nz(bsCisdBull, 9999) <= 10 : nz(bsCisdBear, 9999) <= 10
+        bool c4 = d == 1 ? drPct < 50 : drPct > 50
+        bool c5 = htfB == d
+        bool c6 = timeOK
+        bool c7 = d == 1 ? nz(bsBullSmt, 9999) <= 15 : nz(bsBearSmt, 9999) <= 15
+        bool c8 = not na(nearestDol) and nearestDol >= 2 * estRisk
+        int score = (c1 ? 1 : 0) + (c2 ? 1 : 0) + (c3 ? 1 : 0) + (c4 ? 1 : 0) + (c5 ? 1 : 0) + (c6 ? 1 : 0) + (c7 ? 1 : 0) + (c8 ? 1 : 0)
+        string grade = score >= 8 ? "A+" : score == 7 ? "A" : score == 6 ? "B" : score == 5 ? "C" : score == 4 ? "D" : "F"
+        color gCol = score >= 7 ? C_GRN : score >= 5 ? C_YEL : C_RED
+        string setupType = htfB != 0 and tfBias == htfB ? "Continuation" : "Reversal"
+        string htfLbl = "HTF Bias (" + f_tfLbl(htfTf) + ")"
+
+        f_cell(tPro, 0, 0, "PRO SUITE", C_TXT, C_HDRP, L)
+        f_cell(tPro, 1, 0, setupType + (d == 1 ? " ▲" : " ▼"), C_TXT, C_HDRP, C)
+        f_cell(tPro, 0, 1, "Setup Grade", C_TXT, C_BG, L)
+        f_cell(tPro, 1, 1, grade + "  " + str.tostring(score) + "/8", gCol, C_BG, C)
+        f_cell(tPro, 0, 2, htfLbl, C_TXT, C_BG, L)
+        f_cell(tPro, 1, 2, f_bias(htfB), f_biasCol(htfB), C_BG, C)
+        f_cell(tPro, 0, 3, "Current TF Bias", C_TXT, C_BG, L)
+        f_cell(tPro, 1, 3, f_bias(tfBias), f_biasCol(tfBias), C_BG, C)
+        f_cell(tPro, 0, 4, "Dealing Range", C_TXT, C_BG, L)
+        f_cell(tPro, 1, 4, (drPct < 50 ? "Discount " : "Premium ") + str.tostring(drPct, "0") + "%", drPct < 50 ? C_GRN : C_RED, C_BG, C)
+        array<string> cl = array.from("Liquidity swept", "PDA delivery (FVG " + timeframe.period + "–" + f_tfLbl(htfTf) + ")", "iFVG / CISD", "Discount / Premium", htfLbl + " aligned", "Silver Bullet / macro time", "SMT divergence", "Clear DOL (≥ 2R)")
+        array<bool> cv = array.from(c1, c2, c3, c4, c5, c6, c7, c8)
+        for i = 0 to 7
+            bool ok = array.get(cv, i)
+            f_cell(tPro, 0, 5 + i, array.get(cl, i), C_MUT, C_BG, L)
+            f_cell(tPro, 1, 5 + i, ok ? "✓" : "✗", ok ? C_GRN : C_RED, C_BG, C)
+
+    // ── Signal + killzone stats
+    if showStats
+        f_cell(tStats, 0, 0, "SIGNAL STATS", C_TXT, C_HDR, L)
+        f_cell(tStats, 1, 0, "REV", C_TXT, C_HDR, C)
+        f_cell(tStats, 2, 0, "CONT", C_TXT, C_HDR, C)
+        f_cell(tStats, 3, 0, "ALL", C_TXT, C_HDR, C)
+        array<string> rl = array.from("Trades", "Win % (TP1)", "TP2 hit", "TP3 hit", "Full stop", "Net R")
+        for c = 0 to 2
+            float n  = c == 2 ? array.sum(sTrd) : array.get(sTrd, c)
+            float t1 = c == 2 ? array.sum(sTp1) : array.get(sTp1, c)
+            float t2 = c == 2 ? array.sum(sTp2) : array.get(sTp2, c)
+            float t3 = c == 2 ? array.sum(sTp3) : array.get(sTp3, c)
+            float st = c == 2 ? array.sum(sStp) : array.get(sStp, c)
+            float nr = c == 2 ? array.sum(sNet) : array.get(sNet, c)
+            float wr = n > 0 ? t1 / n : na
+            f_cell(tStats, c + 1, 1, str.tostring(n, "0"), C_TXT, C_BG, C)
+            f_cell(tStats, c + 1, 2, f_pct(t1, n), na(wr) ? C_MUT : wr >= 0.5 ? C_GRN : C_RED, C_BG, C)
+            f_cell(tStats, c + 1, 3, f_pct(t2, n), C_TXT, C_BG, C)
+            f_cell(tStats, c + 1, 4, f_pct(t3, n), C_TXT, C_BG, C)
+            f_cell(tStats, c + 1, 5, str.tostring(st, "0"), st > 0 ? C_RED : C_MUT, C_BG, C)
+            f_cell(tStats, c + 1, 6, f_r(nr), f_col(nr), C_BG, C)
+        for i = 0 to 5
+            f_cell(tStats, 0, i + 1, array.get(rl, i), C_MUT, C_BG, L)
+
+        f_cell(tStats, 0, 7, "KILLZONE", C_TXT, C_HDR, L)
+        f_cell(tStats, 1, 7, "Trades", C_TXT, C_HDR, C)
+        f_cell(tStats, 2, 7, "Win %", C_TXT, C_HDR, C)
+        f_cell(tStats, 3, 7, "Net R", C_TXT, C_HDR, C)
+        for k = 0 to 4
+            float n  = array.get(kTrd, k)
+            float w  = array.get(kWin, k)
+            float nr = array.get(kNet, k)
+            bool live = k == kzIdx
+            f_cell(tStats, 0, 8 + k, array.get(KZ_NAMES, k), live ? C_YEL : C_MUT, C_BG, L)
+            f_cell(tStats, 1, 8 + k, str.tostring(n, "0"), C_TXT, C_BG, C)
+            f_cell(tStats, 2, 8 + k, f_pct(w, n), n > 0 and w / n >= 0.5 ? C_GRN : C_RED, C_BG, C)
+            f_cell(tStats, 3, 8 + k, f_r(nr), f_col(nr), C_BG, C)
+        string status = tOn ? "• In trade: " + (tDir == 1 ? "LONG " : "SHORT ") + (tTyp == 0 ? "REV" : "CONT") + " @ " + str.tostring(tEnt, format.mintick) : kzIdx >= 0 ? "• " + array.get(KZ_NAMES, kzIdx) + " live — scanning" : "• Outside killzones — standby"
+        f_cell(tStats, 0, 13, status, kzIdx >= 0 or tOn ? C_YEL : C_MUT, C_BG, L)
+        f_cell(tStats, 1, 13, "", C_TXT, C_BG, L)
+        f_cell(tStats, 2, 13, "", C_TXT, C_BG, L)
+        f_cell(tStats, 3, 13, "", C_TXT, C_BG, L)
+        if not merged
+            table.merge_cells(tStats, 0, 13, 3, 13)
+
+    // ── live engine trade levels
+    for ln in enLines
+        line.delete(ln)
+    array.clear(enLines)
+    if tOn and showSig
+        array.push(enLines, line.new(tBar, tEnt, bar_index + 8, tEnt, color = C_TXT, width = 1))
+        array.push(enLines, line.new(tBar, tSL, bar_index + 8, tSL, color = C_RED, style = line.style_dashed))
+        for m = 1 to 3
+            float lv = tEnt + m * tDir * tRsk
+            array.push(enLines, line.new(tBar, lv, bar_index + 8, lv, color = color.new(C_GRN, 20 * (m - 1)), style = line.style_dotted))
+
+    // ── TRADE REPORT: parse rows & draw matching trades
+    for ln in rpLines
+        line.delete(ln)
+    array.clear(rpLines)
+    for bx in rpBoxes
+        box.delete(bx)
+    array.clear(rpBoxes)
+    for lb in rpLabels
+        label.delete(lb)
+    array.clear(rpLabels)
+
+    int   nClosed = 0
+    int   nWin    = 0
+    int   nOpen   = 0
+    int   nOther  = 0
+    int   nBad    = 0
+    float sumPts  = 0.0
+    float sumUsd  = 0.0
+    float sumR    = 0.0
+    int   nR      = 0
+    float openUsd = 0.0
+    array<string> logT = array.new<string>()
+    array<string> logV = array.new<string>()
+    array<color>  logC = array.new<color>()
+    int barMs = timeframe.in_seconds() * 1000
+
+    if repOn
+        array<string> rows = str.split(repText, "\n")
+        for row in rows
+            string ln = f_trim(row)
+            if str.length(ln) == 0 or str.startswith(ln, "#") or str.startswith(ln, "//")
+                continue
+            array<string> f = str.split(ln, ",")
+            if array.size(f) < 7
+                nBad += 1
+                continue
+            int dr = f_dir(array.get(f, 1))
+            if dr == 0
+                continue      // header or unknown direction
+            if not f_symMatch(array.get(f, 0))
+                nOther += 1
+                continue
+            float qty = nz(str.tonumber(f_trim(array.get(f, 2))), 1.0)
+            int   tE  = f_parseTime(array.get(f, 3))
+            float pE  = str.tonumber(f_trim(array.get(f, 4)))
+            float pS  = str.tonumber(f_trim(array.get(f, 5)))
+            array<string> tps = str.split(f_trim(array.get(f, 6)), "/")
+            int   tX  = na
+            float pX  = na
+            if array.size(f) > 8
+                tX := f_parseTime(array.get(f, 7))
+                pX := str.tonumber(f_trim(array.get(f, 8)))
+            string note = ""
+            if array.size(f) > 9
+                for j = 9 to array.size(f) - 1
+                    note += (j > 9 ? "," : "") + array.get(f, j)
+                note := f_trim(note)
+            if na(tE) or na(pE)
+                nBad += 1
+                continue
+
+            bool  isOpen = na(tX) or na(pX)
+            int   tXd    = isOpen ? time : tX
+            float pXd    = isOpen ? close : pX
+            int   tEnd   = math.max(tXd, tE + barMs * 3)
+            float risk   = na(pS) ? na : math.abs(pE - pS)
+            float pts    = dr * (pXd - pE)
+            float usd    = pts * syminfo.pointvalue * qty
+            float rr     = not na(risk) and risk > 0 ? pts / risk : na
+            color col    = isOpen ? C_YEL : pts > 0 ? C_GRN : pts < 0 ? C_RED : C_MUT
+
+            if isOpen
+                nOpen += 1
+                openUsd += usd
+            else
+                nClosed += 1
+                nWin += pts > 0 ? 1 : 0
+                sumPts += pts
+                sumUsd += usd
+                if not na(rr)
+                    sumR += rr
+                    nR += 1
+
+            // stop zone
+            if not na(pS)
+                array.push(rpBoxes, box.new(left = tE, top = math.max(pE, pS), right = tEnd, bottom = math.min(pE, pS), xloc = xloc.bar_time, bgcolor = color.new(C_RED, 85), border_color = color.new(C_RED, 60)))
+            // target zone + each TP line
+            float tpFar = na
+            for tpS in tps
+                float v = str.tonumber(f_trim(tpS))
+                if not na(v)
+                    tpFar := na(tpFar) ? v : dr == 1 ? math.max(tpFar, v) : math.min(tpFar, v)
+                    array.push(rpLines, line.new(tE, v, tEnd, v, xloc = xloc.bar_time, color = color.new(C_GRN, 30), style = line.style_dotted))
+            if not na(tpFar)
+                array.push(rpBoxes, box.new(left = tE, top = math.max(pE, tpFar), right = tEnd, bottom = math.min(pE, tpFar), xloc = xloc.bar_time, bgcolor = color.new(C_GRN, 85), border_color = color.new(C_GRN, 60)))
+            // entry line, entry→exit path
+            array.push(rpLines, line.new(tE, pE, tEnd, pE, xloc = xloc.bar_time, color = C_TXT, width = 1))
+            array.push(rpLines, line.new(tE, pE, tXd, pXd, xloc = xloc.bar_time, color = col, style = line.style_dashed, width = 2))
+
+            string eTxt = (dr == 1 ? "▲ LONG " : "▼ SHORT ") + str.tostring(qty, "0.##") + " @ " + str.tostring(pE, format.mintick) + (note != "" ? "\n" + note : "")
+            array.push(rpLabels, label.new(tE, pE, eTxt, xloc = xloc.bar_time, style = dr == 1 ? label.style_label_up : label.style_label_down, color = color.new(dr == 1 ? C_GRN : C_RED, 15), textcolor = color.white, size = size.small))
+            string xTxt = (isOpen ? "OPEN " : "EXIT ") + str.tostring(pXd, format.mintick) + "\n" + f_signed(pts, "0.00") + " pts · " + f_signed(usd, "#,##0.00") + " USD" + (na(rr) ? "" : " · " + f_r(rr))
+            array.push(rpLabels, label.new(tXd, pXd, xTxt, xloc = xloc.bar_time, style = dr == 1 ? label.style_label_down : label.style_label_up, color = color.new(col, 10), textcolor = color.black, size = size.small))
+
+            array.push(logT, str.format_time(tE, "MM-dd HH:mm", repTz) + (dr == 1 ? " ▲" : " ▼"))
+            array.push(logV, isOpen ? "open " + f_signed(usd, "#,##0") : na(rr) ? f_signed(usd, "#,##0") + " USD" : f_r(rr) + " · " + f_signed(usd, "#,##0"))
+            array.push(logC, col)
+
+    if showRep
+        f_cell(tRep, 0, 0, "TRADE REPORT", C_TXT, C_HDR, L)
+        f_cell(tRep, 1, 0, syminfo.ticker, C_YEL, C_HDR, C)
+        f_cell(tRep, 0, 1, "Closed trades", C_MUT, C_BG, L)
+        f_cell(tRep, 1, 1, str.tostring(nClosed), C_TXT, C_BG, R)
+        f_cell(tRep, 0, 2, "Win %", C_MUT, C_BG, L)
+        f_cell(tRep, 1, 2, f_pct(nWin, nClosed), nClosed > 0 and float(nWin) / nClosed >= 0.5 ? C_GRN : C_RED, C_BG, R)
+        f_cell(tRep, 0, 3, "Net points", C_MUT, C_BG, L)
+        f_cell(tRep, 1, 3, f_signed(sumPts, "0.00"), f_col(sumPts), C_BG, R)
+        f_cell(tRep, 0, 4, "Net USD", C_MUT, C_BG, L)
+        f_cell(tRep, 1, 4, f_signed(sumUsd, "#,##0.00"), f_col(sumUsd), C_BG, R)
+        f_cell(tRep, 0, 5, "Net R", C_MUT, C_BG, L)
+        f_cell(tRep, 1, 5, nR > 0 ? f_r(sumR) : "—", f_col(sumR), C_BG, R)
+        f_cell(tRep, 0, 6, "Open trades / P&L", C_MUT, C_BG, L)
+        f_cell(tRep, 1, 6, str.tostring(nOpen) + " / " + f_signed(openUsd, "#,##0.00"), nOpen > 0 ? C_YEL : C_MUT, C_BG, R)
+        f_cell(tRep, 0, 7, "Other symbols / bad rows", C_MUT, C_BG, L)
+        f_cell(tRep, 1, 7, str.tostring(nOther) + " / " + str.tostring(nBad), nBad > 0 ? C_RED : C_MUT, C_BG, R)
+        f_cell(tRep, 0, 8, "RECENT", C_TXT, C_HDR, L)
+        f_cell(tRep, 1, 8, "Result", C_TXT, C_HDR, C)
+        int nLog = array.size(logT)
+        for r = 0 to 6
+            int k = nLog - 1 - r
+            if k >= 0
+                f_cell(tRep, 0, 9 + r, array.get(logT, k), C_TXT, C_BG, L)
+                f_cell(tRep, 1, 9 + r, array.get(logV, k), array.get(logC, k), C_BG, R)
+            else
+                f_cell(tRep, 0, 9 + r, "", C_TXT, C_BG, L)
+                f_cell(tRep, 1, 9 + r, "", C_TXT, C_BG, R)
+
+    merged := true
