@@ -20,7 +20,7 @@
 //  • Times: YYYY-MM-DD HH:MM[:SS] or MM/DD/YYYY HH:MM, in "Report timezone"
 //  • SYMBOL "*" matches every chart. Lines starting with # are ignored.
 // ─────────────────────────────────────────────────────────────────────────────
-indicator("RZ Pro Suite — Signals · Killzones · DOL · Trade Report", "RZ Pro Suite", overlay = true, max_lines_count = 500, max_boxes_count = 500, max_labels_count = 500, max_bars_back = 2000)
+indicator("RZ Pro Suite — Signals · Killzones · DOL · Trade Report", "RZ Pro", overlay = true, max_lines_count = 500, max_boxes_count = 500, max_labels_count = 500, max_bars_back = 2000)
 
 //──────────────────────────────── INPUTS
 G_REP = "① Trade Report — paste entries & exits"
@@ -649,9 +649,9 @@ if barstate.islast
             sSL  := math.max(swHi, close + 0.25 * atr) + 0.1 * atr
             sHow := "Market"
     float sRisk = math.abs(sEnt - sSL)
-    float sTp1  = sEnt + sDir * sRisk
-    float sTp2  = sEnt + 2 * sDir * sRisk
-    float sTp3  = sEnt + 3 * sDir * sRisk
+    float suTp1  = sEnt + sDir * sRisk
+    float suTp2  = sEnt + 2 * sDir * sRisk
+    float suTp3  = sEnt + 3 * sDir * sRisk
     string tp3Name = "3R"
     // TP3 = nearest DOL beyond 2R in the trade direction (if any)
     if array.size(dPrice) > 0 and sRisk > 0
@@ -662,8 +662,8 @@ if barstate.islast
                 best := p
                 tp3Name := array.get(dNames, i)
         if not na(best)
-            sTp3 := best
-    float sTp3R = sRisk > 0 ? math.abs(sTp3 - sEnt) / sRisk : na
+            suTp3 := best
+    float suTp3R = sRisk > 0 ? math.abs(suTp3 - sEnt) / sRisk : na
     bool drawSetup = showSet and sRisk > 0 and (live or score >= minGrade)
 
     // ── draw key levels
@@ -713,18 +713,18 @@ if barstate.islast
         float usdR = sRisk * syminfo.pointvalue
         color dc = sDir == 1 ? C_GRN : C_RED
         array.push(suBoxes, box.new(x1, math.max(sEnt, sSL), x2, math.min(sEnt, sSL), bgcolor = color.new(C_RED, 82), border_color = color.new(C_RED, 50)))
-        array.push(suBoxes, box.new(x1, math.max(sEnt, sTp3), x2, math.min(sEnt, sTp3), bgcolor = color.new(C_GRN, 85), border_color = color.new(C_GRN, 50)))
+        array.push(suBoxes, box.new(x1, math.max(sEnt, suTp3), x2, math.min(sEnt, suTp3), bgcolor = color.new(C_GRN, 85), border_color = color.new(C_GRN, 50)))
         array.push(suLines, line.new(x1, sEnt, x2, sEnt, color = C_TXT, width = 2))
-        array.push(suLines, line.new(x1, sTp1, x2, sTp1, color = color.new(C_GRN, 20), style = line.style_dotted))
-        array.push(suLines, line.new(x1, sTp2, x2, sTp2, color = color.new(C_GRN, 20), style = line.style_dotted))
+        array.push(suLines, line.new(x1, suTp1, x2, suTp1, color = color.new(C_GRN, 20), style = line.style_dotted))
+        array.push(suLines, line.new(x1, suTp2, x2, suTp2, color = color.new(C_GRN, 20), style = line.style_dotted))
         string hdr = (sDir == 1 ? "▲ LONG SETUP" : "▼ SHORT SETUP") + " · " + grade + " " + str.tostring(score) + "/8 · " + (live ? sHow : setupType)
-        float hdrY = sDir == 1 ? math.max(sTp3, sEnt) : math.min(sTp3, sEnt)
+        float hdrY = sDir == 1 ? math.max(suTp3, sEnt) : math.min(suTp3, sEnt)
         array.push(suLabels, label.new(x1, hdrY, hdr, style = sDir == 1 ? label.style_label_lower_left : label.style_label_upper_left, color = color.new(dc, 15), textcolor = color.white, size = size.small))
         array.push(suLabels, label.new(x2, sEnt, "ENTRY " + str.tostring(sEnt, format.mintick) + (live ? "" : " (" + sHow + ")"), style = label.style_label_left, color = color.new(C_BG, 20), textcolor = C_TXT, size = size.small))
         array.push(suLabels, label.new(x2, sSL, "SL " + str.tostring(sSL, format.mintick) + "  −1R · " + str.tostring(sRisk, format.mintick) + " pts · $" + str.tostring(usdR, "#,##0") + "/ct", style = label.style_label_left, color = color.new(C_RED, 20), textcolor = color.white, size = size.small))
-        array.push(suLabels, label.new(x2, sTp1, "TP1 " + str.tostring(sTp1, format.mintick) + "  +1R", style = label.style_label_left, color = color.new(C_GRN, 40), textcolor = color.white, size = size.small))
-        array.push(suLabels, label.new(x2, sTp2, "TP2 " + str.tostring(sTp2, format.mintick) + "  +2R", style = label.style_label_left, color = color.new(C_GRN, 30), textcolor = color.white, size = size.small))
-        array.push(suLabels, label.new(x2, sTp3, "TP3 " + str.tostring(sTp3, format.mintick) + "  +" + str.tostring(sTp3R, "0.0") + "R" + (tp3Name != "3R" ? " · " + tp3Name : ""), style = label.style_label_left, color = color.new(C_GRN, 15), textcolor = color.white, size = size.small))
+        array.push(suLabels, label.new(x2, suTp1, "TP1 " + str.tostring(suTp1, format.mintick) + "  +1R", style = label.style_label_left, color = color.new(C_GRN, 40), textcolor = color.white, size = size.small))
+        array.push(suLabels, label.new(x2, suTp2, "TP2 " + str.tostring(suTp2, format.mintick) + "  +2R", style = label.style_label_left, color = color.new(C_GRN, 30), textcolor = color.white, size = size.small))
+        array.push(suLabels, label.new(x2, suTp3, "TP3 " + str.tostring(suTp3, format.mintick) + "  +" + str.tostring(suTp3R, "0.0") + "R" + (tp3Name != "3R" ? " · " + tp3Name : ""), style = label.style_label_left, color = color.new(C_GRN, 15), textcolor = color.white, size = size.small))
 
     if showPro
         f_cell(tPro, 0, 0, "PRO SUITE", C_TXT, C_HDRP, L)
@@ -751,9 +751,9 @@ if barstate.islast
         f_cell(tPro, 0, 15, "Stop (1R)", C_MUT, C_BG, L)
         f_cell(tPro, 1, 15, showLv ? str.tostring(sSL, format.mintick) + "  (" + str.tostring(sRisk, format.mintick) + " pts)" : "—", C_RED, C_BG, C)
         f_cell(tPro, 0, 16, "TP1 / TP2", C_MUT, C_BG, L)
-        f_cell(tPro, 1, 16, showLv ? str.tostring(sTp1, format.mintick) + " / " + str.tostring(sTp2, format.mintick) : "—", C_GRN, C_BG, C)
+        f_cell(tPro, 1, 16, showLv ? str.tostring(suTp1, format.mintick) + " / " + str.tostring(suTp2, format.mintick) : "—", C_GRN, C_BG, C)
         f_cell(tPro, 0, 17, "TP3" + (tp3Name != "3R" ? " (" + tp3Name + ")" : ""), C_MUT, C_BG, L)
-        f_cell(tPro, 1, 17, showLv ? str.tostring(sTp3, format.mintick) + "  +" + str.tostring(sTp3R, "0.0") + "R" : "—", C_GRN, C_BG, C)
+        f_cell(tPro, 1, 17, showLv ? str.tostring(suTp3, format.mintick) + "  +" + str.tostring(suTp3R, "0.0") + "R" : "—", C_GRN, C_BG, C)
 
     // ── Signal + killzone stats
     if showStats
