@@ -33,6 +33,7 @@ repText    = input.text_area("# SYMBOL, DIR, QTY, ENTRY_TIME, ENTRY, STOP, TP(s)
 repTz      = input.string("America/New_York", "Report timezone", group = G_REP)
 matchMicro = input.bool(true, "Match mini ↔ micro (NQ↔MNQ, ES↔MES…)", group = G_REP)
 showRep    = input.bool(true, "Show report stats panel", group = G_REP)
+autoTp     = input.bool(true, "No TP in row → draw TP1/TP2/TP3 at 1R/2R/3R", group = G_REP)
 
 showSig  = input.bool(true, "Show signal markers", group = G_SIG)
 onlyKZ   = input.bool(true, "Only take signals inside killzones", group = G_SIG)
@@ -511,6 +512,7 @@ var table tDol   = table.new(f_pos(dolPos), 3, 5, bgcolor = C_BG, frame_color = 
 var table tPro   = table.new(f_pos(proPos), 2, 18, bgcolor = C_BG, frame_color = C_BRD, frame_width = 1, border_color = C_BRD, border_width = 1)
 var table tRep   = table.new(f_pos(repPos), 2, 16, bgcolor = C_BG, frame_color = C_BRD, frame_width = 1, border_color = C_BRD, border_width = 1)
 var bool  merged = false
+var int   firstT = time
 
 var array<line>  rpLines  = array.new<line>()
 var array<box>   rpBoxes  = array.new<box>()
@@ -827,6 +829,7 @@ if barstate.islast
     int   nOpen   = 0
     int   nOther  = 0
     int   nBad    = 0
+    int   nOff    = 0
     float sumPts  = 0.0
     float sumUsd  = 0.0
     float sumR    = 0.0
@@ -894,20 +897,37 @@ if barstate.islast
                     sumR += rr
                     nR += 1
 
-            // stop zone
-            if not na(pS)
-                array.push(rpBoxes, box.new(left = tE, top = math.max(pE, pS), right = tEnd, bottom = math.min(pE, pS), xloc = xloc.bar_time, bgcolor = color.new(C_RED, 85), border_color = color.new(C_RED, 60)))
-            // target zone + each TP line
-            float tpFar = na
+            if tE < firstT
+                nOff += 1
+            // collect targets: from the row, or auto 1R/2R/3R off the stop
+            array<float> tpv = array.new<float>()
             for tpS in tps
                 float v = str.tonumber(f_trim(tpS))
                 if not na(v)
+                    array.push(tpv, v)
+            bool tpAuto = false
+            if array.size(tpv) == 0 and autoTp and not na(risk) and risk > 0
+                tpAuto := true
+                for m = 1 to 3
+                    array.push(tpv, pE + dr * m * risk)
+            // stop zone + SL tag
+            if not na(pS)
+                array.push(rpBoxes, box.new(left = tE, top = math.max(pE, pS), right = tEnd, bottom = math.min(pE, pS), xloc = xloc.bar_time, bgcolor = color.new(C_RED, 85), border_color = color.new(C_RED, 60)))
+                array.push(rpLabels, label.new(tEnd, pS, "SL " + str.tostring(pS, format.mintick), xloc = xloc.bar_time, style = label.style_label_left, color = color.new(C_RED, 20), textcolor = color.white, size = size.tiny))
+            // target zone + TP lines and tags
+            float tpFar = na
+            if array.size(tpv) > 0
+                for m = 0 to array.size(tpv) - 1
+                    float v = array.get(tpv, m)
                     tpFar := na(tpFar) ? v : dr == 1 ? math.max(tpFar, v) : math.min(tpFar, v)
-                    array.push(rpLines, line.new(tE, v, tEnd, v, xloc = xloc.bar_time, color = color.new(C_GRN, 30), style = line.style_dotted))
+                    array.push(rpLines, line.new(tE, v, tEnd, v, xloc = xloc.bar_time, color = color.new(C_GRN, 20), style = line.style_dotted, width = 2))
+                    string rTxt = not na(risk) and risk > 0 ? "  " + f_signed(dr * (v - pE) / risk, "0.0") + "R" : ""
+                    array.push(rpLabels, label.new(tEnd, v, "TP" + str.tostring(m + 1) + " " + str.tostring(v, format.mintick) + rTxt + (tpAuto ? " (auto)" : ""), xloc = xloc.bar_time, style = label.style_label_left, color = color.new(C_GRN, 25), textcolor = color.white, size = size.tiny))
             if not na(tpFar)
                 array.push(rpBoxes, box.new(left = tE, top = math.max(pE, tpFar), right = tEnd, bottom = math.min(pE, tpFar), xloc = xloc.bar_time, bgcolor = color.new(C_GRN, 85), border_color = color.new(C_GRN, 60)))
-            // entry line, entry→exit path
-            array.push(rpLines, line.new(tE, pE, tEnd, pE, xloc = xloc.bar_time, color = C_TXT, width = 1))
+            // entry line + tag, entry→exit path
+            array.push(rpLines, line.new(tE, pE, tEnd, pE, xloc = xloc.bar_time, color = C_TXT, width = 2))
+            array.push(rpLabels, label.new(tEnd, pE, "ENTRY " + str.tostring(pE, format.mintick), xloc = xloc.bar_time, style = label.style_label_left, color = color.new(C_BG, 10), textcolor = C_TXT, size = size.tiny))
             array.push(rpLines, line.new(tE, pE, tXd, pXd, xloc = xloc.bar_time, color = col, style = line.style_dashed, width = 2))
 
             string eTxt = (dr == 1 ? "▲ LONG " : "▼ SHORT ") + str.tostring(qty, "0.##") + " @ " + str.tostring(pE, format.mintick) + (note != "" ? "\n" + note : "")
@@ -934,8 +954,8 @@ if barstate.islast
         f_cell(tRep, 1, 5, nR > 0 ? f_r(sumR) : "—", f_col(sumR), C_BG, R)
         f_cell(tRep, 0, 6, "Open trades / P&L", C_MUT, C_BG, L)
         f_cell(tRep, 1, 6, str.tostring(nOpen) + " / " + f_signed(openUsd, "#,##0.00"), nOpen > 0 ? C_YEL : C_MUT, C_BG, R)
-        f_cell(tRep, 0, 7, "Other symbols / bad rows", C_MUT, C_BG, L)
-        f_cell(tRep, 1, 7, str.tostring(nOther) + " / " + str.tostring(nBad), nBad > 0 ? C_RED : C_MUT, C_BG, R)
+        f_cell(tRep, 0, 7, "Other sym / bad / before chart", C_MUT, C_BG, L)
+        f_cell(tRep, 1, 7, str.tostring(nOther) + " / " + str.tostring(nBad) + " / " + str.tostring(nOff), nBad > 0 or nOff > 0 ? C_RED : C_MUT, C_BG, R)
         f_cell(tRep, 0, 8, "RECENT", C_TXT, C_HDR, L)
         f_cell(tRep, 1, 8, "Result", C_TXT, C_HDR, C)
         int nLog = array.size(logT)
