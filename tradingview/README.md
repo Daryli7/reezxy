@@ -8,6 +8,8 @@
 | **Killzone** | Trades, win % and net R for Asia, London, NY Pre-open, NY Open and NY PM. The live session is shown in yellow |
 | **DOL** | The 4 nearest draws on liquidity in the bias direction: PDH/PDL, Asia/London/NY AM highs and lows, and untaken BSL/SSL swing levels |
 | **Pro Suite** | An 8-point checklist with a grade (A+ to F): sweep, PDA/FVG, iFVG/CISD, premium/discount, HTF bias, Silver Bullet/macro time, SMT, clear DOL ≥ 2R |
+| **Key levels (on chart)** | Lines and price tags for PDH/PDL, Asia, London and NY AM highs and lows, plus the nearest 3 untaken BSL above and SSL below |
+| **Trade setup (on chart)** | Entry, a red stop zone, a green target zone, TP1 (1R), TP2 (2R) and TP3 (the nearest DOL beyond 2R, otherwise 3R), with points and $ risk per contract. It's also listed at the bottom of the Pro Suite panel |
 | **Trade Report** | The trades you paste in, drawn on the chart with entry, stop zone, target zone, exit, points, USD and R |
 
 ## Install
@@ -32,6 +34,13 @@ EURUSD, SELL, 1, 11/13/2026 03:15, 1.08420, 1.08510, 1.08250, 11/13/2026 05:02, 
 - Lines starting with `#` are skipped. The panel counts rows for other symbols and rows it couldn't read.
 
 When you ask Claude for a trade report, ask for it "in RZ report format" and you can paste the rows straight in.
+
+## Trade setup rules
+- **Direction:** the HTF bias. If the HTF bias is neutral, the current-timeframe structure is used instead.
+- **Entry:** a limit at the nearest fresh FVG (on the chart timeframe or the HTF) if it's within 2 ATR of price. Otherwise the entry is at market.
+- **Stop:** beyond the FVG for a limit entry. For a market entry, beyond the recent swing.
+- **When it's drawn:** only when the checklist scores at least *Only draw setup when checklist score ≥* (5/8 by default). Below that, the panel says "Wait". When the signal engine is in a trade, the setup shows that live trade instead.
+- All of these settings are under **⑤ Key Levels & Trade Setup**.
 
 ## Signal engine rules
 - **REV:** price sweeps a swing high or low (wicks through it, then closes back inside). Within *N* bars a displacement candle (body ≥ 1.2 × ATR) forms an FVG in the opposite direction. The stop goes beyond the sweep extreme.

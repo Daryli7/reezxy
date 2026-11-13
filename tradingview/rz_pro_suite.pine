@@ -54,6 +54,14 @@ kzOpen = input.session("0930-1100", "NY Open", group = G_KZ)
 kzPM   = input.session("1330-1600", "NY PM KZ", group = G_KZ)
 kzBg   = input.bool(false, "Shade killzones", group = G_KZ)
 
+G_LV = "⑤ Key Levels & Trade Setup"
+showLvls = input.bool(true, "Draw key levels on chart", group = G_LV)
+lvlSwN   = input.int(3, "Nearest BSL / SSL swing levels to draw (each side)", minval = 0, maxval = 10, group = G_LV)
+lvlBack  = input.int(60, "Level line length back (bars)", minval = 5, group = G_LV)
+showSet  = input.bool(true, "Draw trade setup (entry / SL / TP1-3)", group = G_LV)
+minGrade = input.int(5, "Only draw setup when checklist score ≥", minval = 0, maxval = 8, group = G_LV)
+setLen   = input.int(25, "Setup box width (bars)", minval = 5, group = G_LV)
+
 showStats = input.bool(true, "Signal / killzone stats", inline = "s", group = G_UI)
 statsPos  = input.string("Top Right", "", options = ["Top Left", "Top Center", "Top Right", "Middle Left", "Middle Right", "Bottom Left", "Bottom Center", "Bottom Right"], inline = "s", group = G_UI)
 showDol   = input.bool(true, "DOL panel", inline = "d", group = G_UI)
@@ -500,7 +508,7 @@ f_addLvl(array<string> names, array<float> prices, string n, float p) =>
 //──────────────────────────────── PANELS & DRAWINGS (last bar only)
 var table tStats = table.new(f_pos(statsPos), 4, 14, bgcolor = C_BG, frame_color = C_BRD, frame_width = 1, border_color = C_BRD, border_width = 1)
 var table tDol   = table.new(f_pos(dolPos), 3, 5, bgcolor = C_BG, frame_color = C_BRD, frame_width = 1, border_color = C_BRD, border_width = 1)
-var table tPro   = table.new(f_pos(proPos), 2, 13, bgcolor = C_BG, frame_color = C_BRD, frame_width = 1, border_color = C_BRD, border_width = 1)
+var table tPro   = table.new(f_pos(proPos), 2, 18, bgcolor = C_BG, frame_color = C_BRD, frame_width = 1, border_color = C_BRD, border_width = 1)
 var table tRep   = table.new(f_pos(repPos), 2, 16, bgcolor = C_BG, frame_color = C_BRD, frame_width = 1, border_color = C_BRD, border_width = 1)
 var bool  merged = false
 
@@ -508,6 +516,20 @@ var array<line>  rpLines  = array.new<line>()
 var array<box>   rpBoxes  = array.new<box>()
 var array<label> rpLabels = array.new<label>()
 var array<line>  enLines  = array.new<line>()
+var array<line>  klLines  = array.new<line>()
+var array<label> klLabels = array.new<label>()
+var array<line>  suLines  = array.new<line>()
+var array<box>   suBoxes  = array.new<box>()
+var array<label> suLabels = array.new<label>()
+
+f_lvlCol(string n) =>
+    str.startswith(n, "PD") ? C_TXT : str.startswith(n, "Asia") ? #a78bfa : str.startswith(n, "London") ? #60a5fa : str.startswith(n, "NY") ? #fb923c : n == "BSL" ? color.new(C_GRN, 30) : color.new(C_RED, 30)
+
+f_drawLvl(string n, float p) =>
+    color c = f_lvlCol(n)
+    bool swing = n == "BSL" or n == "SSL"
+    array.push(klLines, line.new(bar_index - lvlBack, p, bar_index + 3, p, color = c, style = swing ? line.style_dashed : line.style_solid, width = 1))
+    array.push(klLabels, label.new(bar_index + 3, p, n + "  " + str.tostring(p, format.mintick), style = label.style_label_left, color = color.new(C_BG, 100), textcolor = c, size = size.small))
 
 L = text.align_left
 C = text.align_center
@@ -564,24 +586,147 @@ if barstate.islast
                 f_cell(tDol, 1, r + 1, "", C_TXT, C_BG, R)
                 f_cell(tDol, 2, r + 1, "", C_TXT, C_BG, R)
 
-    // ── Pro Suite checklist
-    if showPro
-        int d = dir != 0 ? dir : (close >= open ? 1 : -1)
-        float estRisk = math.max(d == 1 ? close - swLo : swHi - close, atr * 0.25)
-        bool c1 = d == 1 ? nz(bsBullSw, 9999) <= 30 : nz(bsBearSw, 9999) <= 30
-        bool c2 = d == 1 ? nz(bsBullPda, 9999) <= 10 : nz(bsBearPda, 9999) <= 10
-        bool c3 = d == 1 ? nz(bsCisdBull, 9999) <= 10 : nz(bsCisdBear, 9999) <= 10
-        bool c4 = d == 1 ? drPct < 50 : drPct > 50
-        bool c5 = htfB == d
-        bool c6 = timeOK
-        bool c7 = d == 1 ? nz(bsBullSmt, 9999) <= 15 : nz(bsBearSmt, 9999) <= 15
-        bool c8 = not na(nearestDol) and nearestDol >= 2 * estRisk
-        int score = (c1 ? 1 : 0) + (c2 ? 1 : 0) + (c3 ? 1 : 0) + (c4 ? 1 : 0) + (c5 ? 1 : 0) + (c6 ? 1 : 0) + (c7 ? 1 : 0) + (c8 ? 1 : 0)
-        string grade = score >= 8 ? "A+" : score == 7 ? "A" : score == 6 ? "B" : score == 5 ? "C" : score == 4 ? "D" : "F"
-        color gCol = score >= 7 ? C_GRN : score >= 5 ? C_YEL : C_RED
-        string setupType = htfB != 0 and tfBias == htfB ? "Continuation" : "Reversal"
-        string htfLbl = "HTF Bias (" + f_tfLbl(htfTf) + ")"
+    // ── Pro Suite checklist (always computed: it drives the setup drawing too)
+    int d = dir != 0 ? dir : (close >= open ? 1 : -1)
+    float estRisk = math.max(d == 1 ? close - swLo : swHi - close, atr * 0.25)
+    bool c1 = d == 1 ? nz(bsBullSw, 9999) <= 30 : nz(bsBearSw, 9999) <= 30
+    bool c2 = d == 1 ? nz(bsBullPda, 9999) <= 10 : nz(bsBearPda, 9999) <= 10
+    bool c3 = d == 1 ? nz(bsCisdBull, 9999) <= 10 : nz(bsCisdBear, 9999) <= 10
+    bool c4 = d == 1 ? drPct < 50 : drPct > 50
+    bool c5 = htfB == d
+    bool c6 = timeOK
+    bool c7 = d == 1 ? nz(bsBullSmt, 9999) <= 15 : nz(bsBearSmt, 9999) <= 15
+    bool c8 = not na(nearestDol) and nearestDol >= 2 * estRisk
+    int score = (c1 ? 1 : 0) + (c2 ? 1 : 0) + (c3 ? 1 : 0) + (c4 ? 1 : 0) + (c5 ? 1 : 0) + (c6 ? 1 : 0) + (c7 ? 1 : 0) + (c8 ? 1 : 0)
+    string grade = score >= 8 ? "A+" : score == 7 ? "A" : score == 6 ? "B" : score == 5 ? "C" : score == 4 ? "D" : "F"
+    color gCol = score >= 7 ? C_GRN : score >= 5 ? C_YEL : C_RED
+    string setupType = htfB != 0 and tfBias == htfB ? "Continuation" : "Reversal"
+    string htfLbl = "HTF Bias (" + f_tfLbl(htfTf) + ")"
 
+    // ── Trade setup: live engine trade, otherwise the projected setup in the bias direction
+    bool  live  = tOn
+    int   sDir  = live ? tDir : d
+    float sEnt  = na
+    float sSL   = na
+    string sHow = ""
+    if live
+        sEnt := tEnt
+        sSL  := tSL
+        sHow := "LIVE " + (tTyp == 0 ? "REV" : "CONT")
+    else if sDir == 1
+        // best long entry: nearest bullish FVG (chart or HTF) below price, else market
+        float pdaTop = na
+        float pdaBot = na
+        if not na(bFvgTop) and bFvgTop < close
+            pdaTop := bFvgTop
+            pdaBot := bFvgBot
+        if not na(hBT) and hBT < close and (na(pdaTop) or hBT > pdaTop)
+            pdaTop := hBT
+            pdaBot := hBB
+        if not na(pdaTop) and close - pdaTop <= 2 * atr
+            sEnt := pdaTop
+            sSL  := math.min(pdaBot, sEnt - 0.25 * atr) - 0.1 * atr
+            sHow := "Limit @ FVG"
+        else
+            sEnt := close
+            sSL  := math.min(swLo, close - 0.25 * atr) - 0.1 * atr
+            sHow := "Market"
+    else
+        float pdaBot = na
+        float pdaTop = na
+        if not na(sFvgBot) and sFvgBot > close
+            pdaBot := sFvgBot
+            pdaTop := sFvgTop
+        if not na(hSB) and hSB > close and (na(pdaBot) or hSB < pdaBot)
+            pdaBot := hSB
+            pdaTop := hST
+        if not na(pdaBot) and pdaBot - close <= 2 * atr
+            sEnt := pdaBot
+            sSL  := math.max(pdaTop, sEnt + 0.25 * atr) + 0.1 * atr
+            sHow := "Limit @ FVG"
+        else
+            sEnt := close
+            sSL  := math.max(swHi, close + 0.25 * atr) + 0.1 * atr
+            sHow := "Market"
+    float sRisk = math.abs(sEnt - sSL)
+    float sTp1  = sEnt + sDir * sRisk
+    float sTp2  = sEnt + 2 * sDir * sRisk
+    float sTp3  = sEnt + 3 * sDir * sRisk
+    string tp3Name = "3R"
+    // TP3 = nearest DOL beyond 2R in the trade direction (if any)
+    if array.size(dPrice) > 0 and sRisk > 0
+        float best = na
+        for i = 0 to array.size(dPrice) - 1
+            float p = array.get(dPrice, i)
+            if sDir * (p - sEnt) >= 2 * sRisk and (na(best) or math.abs(p - sEnt) < math.abs(best - sEnt))
+                best := p
+                tp3Name := array.get(dNames, i)
+        if not na(best)
+            sTp3 := best
+    float sTp3R = sRisk > 0 ? math.abs(sTp3 - sEnt) / sRisk : na
+    bool drawSetup = showSet and sRisk > 0 and (live or score >= minGrade)
+
+    // ── draw key levels
+    for x in klLines
+        line.delete(x)
+    array.clear(klLines)
+    for x in klLabels
+        label.delete(x)
+    array.clear(klLabels)
+    if showLvls
+        if array.size(dPrice) > 0
+            for i = 0 to array.size(dPrice) - 1
+                string n = array.get(dNames, i)
+                if n != "BSL" and n != "SSL"
+                    f_drawLvl(n, array.get(dPrice, i))
+        if lvlSwN > 0
+            // nearest swing liquidity above (BSL) and below (SSL)
+            array<float> bAbove = array.new<float>()
+            for v in bslArr
+                if v > close
+                    array.push(bAbove, v)
+            array<float> sBelow = array.new<float>()
+            for v in sslArr
+                if v < close
+                    array.push(sBelow, v)
+            array.sort(bAbove, order.ascending)
+            array.sort(sBelow, order.descending)
+            for i = 0 to lvlSwN - 1
+                if i < array.size(bAbove)
+                    f_drawLvl("BSL", array.get(bAbove, i))
+                if i < array.size(sBelow)
+                    f_drawLvl("SSL", array.get(sBelow, i))
+
+    // ── draw trade setup
+    for x in suLines
+        line.delete(x)
+    array.clear(suLines)
+    for x in suBoxes
+        box.delete(x)
+    array.clear(suBoxes)
+    for x in suLabels
+        label.delete(x)
+    array.clear(suLabels)
+    if drawSetup
+        int x1 = live ? tBar : bar_index + 2
+        int x2 = bar_index + 2 + setLen
+        float usdR = sRisk * syminfo.pointvalue
+        color dc = sDir == 1 ? C_GRN : C_RED
+        array.push(suBoxes, box.new(x1, math.max(sEnt, sSL), x2, math.min(sEnt, sSL), bgcolor = color.new(C_RED, 82), border_color = color.new(C_RED, 50)))
+        array.push(suBoxes, box.new(x1, math.max(sEnt, sTp3), x2, math.min(sEnt, sTp3), bgcolor = color.new(C_GRN, 85), border_color = color.new(C_GRN, 50)))
+        array.push(suLines, line.new(x1, sEnt, x2, sEnt, color = C_TXT, width = 2))
+        array.push(suLines, line.new(x1, sTp1, x2, sTp1, color = color.new(C_GRN, 20), style = line.style_dotted))
+        array.push(suLines, line.new(x1, sTp2, x2, sTp2, color = color.new(C_GRN, 20), style = line.style_dotted))
+        string hdr = (sDir == 1 ? "▲ LONG SETUP" : "▼ SHORT SETUP") + " · " + grade + " " + str.tostring(score) + "/8 · " + (live ? sHow : setupType)
+        float hdrY = sDir == 1 ? math.max(sTp3, sEnt) : math.min(sTp3, sEnt)
+        array.push(suLabels, label.new(x1, hdrY, hdr, style = sDir == 1 ? label.style_label_lower_left : label.style_label_upper_left, color = color.new(dc, 15), textcolor = color.white, size = size.small))
+        array.push(suLabels, label.new(x2, sEnt, "ENTRY " + str.tostring(sEnt, format.mintick) + (live ? "" : " (" + sHow + ")"), style = label.style_label_left, color = color.new(C_BG, 20), textcolor = C_TXT, size = size.small))
+        array.push(suLabels, label.new(x2, sSL, "SL " + str.tostring(sSL, format.mintick) + "  −1R · " + str.tostring(sRisk, format.mintick) + " pts · $" + str.tostring(usdR, "#,##0") + "/ct", style = label.style_label_left, color = color.new(C_RED, 20), textcolor = color.white, size = size.small))
+        array.push(suLabels, label.new(x2, sTp1, "TP1 " + str.tostring(sTp1, format.mintick) + "  +1R", style = label.style_label_left, color = color.new(C_GRN, 40), textcolor = color.white, size = size.small))
+        array.push(suLabels, label.new(x2, sTp2, "TP2 " + str.tostring(sTp2, format.mintick) + "  +2R", style = label.style_label_left, color = color.new(C_GRN, 30), textcolor = color.white, size = size.small))
+        array.push(suLabels, label.new(x2, sTp3, "TP3 " + str.tostring(sTp3, format.mintick) + "  +" + str.tostring(sTp3R, "0.0") + "R" + (tp3Name != "3R" ? " · " + tp3Name : ""), style = label.style_label_left, color = color.new(C_GRN, 15), textcolor = color.white, size = size.small))
+
+    if showPro
         f_cell(tPro, 0, 0, "PRO SUITE", C_TXT, C_HDRP, L)
         f_cell(tPro, 1, 0, setupType + (d == 1 ? " ▲" : " ▼"), C_TXT, C_HDRP, C)
         f_cell(tPro, 0, 1, "Setup Grade", C_TXT, C_BG, L)
@@ -598,6 +743,17 @@ if barstate.islast
             bool ok = array.get(cv, i)
             f_cell(tPro, 0, 5 + i, array.get(cl, i), C_MUT, C_BG, L)
             f_cell(tPro, 1, 5 + i, ok ? "✓" : "✗", ok ? C_GRN : C_RED, C_BG, C)
+        bool showLv = sRisk > 0 and (live or score >= minGrade)
+        f_cell(tPro, 0, 13, "TRADE SETUP", C_TXT, C_HDRP, L)
+        f_cell(tPro, 1, 13, live ? sHow : showLv ? (sDir == 1 ? "LONG · " : "SHORT · ") + sHow : "Wait — grade < " + str.tostring(minGrade) + "/8", live ? C_YEL : showLv ? (sDir == 1 ? C_GRN : C_RED) : C_MUT, C_HDRP, C)
+        f_cell(tPro, 0, 14, "Entry", C_MUT, C_BG, L)
+        f_cell(tPro, 1, 14, showLv ? str.tostring(sEnt, format.mintick) : "—", C_TXT, C_BG, C)
+        f_cell(tPro, 0, 15, "Stop (1R)", C_MUT, C_BG, L)
+        f_cell(tPro, 1, 15, showLv ? str.tostring(sSL, format.mintick) + "  (" + str.tostring(sRisk, format.mintick) + " pts)" : "—", C_RED, C_BG, C)
+        f_cell(tPro, 0, 16, "TP1 / TP2", C_MUT, C_BG, L)
+        f_cell(tPro, 1, 16, showLv ? str.tostring(sTp1, format.mintick) + " / " + str.tostring(sTp2, format.mintick) : "—", C_GRN, C_BG, C)
+        f_cell(tPro, 0, 17, "TP3" + (tp3Name != "3R" ? " (" + tp3Name + ")" : ""), C_MUT, C_BG, L)
+        f_cell(tPro, 1, 17, showLv ? str.tostring(sTp3, format.mintick) + "  +" + str.tostring(sTp3R, "0.0") + "R" : "—", C_GRN, C_BG, C)
 
     // ── Signal + killzone stats
     if showStats
@@ -631,8 +787,8 @@ if barstate.islast
             float n  = array.get(kTrd, k)
             float w  = array.get(kWin, k)
             float nr = array.get(kNet, k)
-            bool live = k == kzIdx
-            f_cell(tStats, 0, 8 + k, array.get(KZ_NAMES, k), live ? C_YEL : C_MUT, C_BG, L)
+            bool isLiveKz = k == kzIdx
+            f_cell(tStats, 0, 8 + k, array.get(KZ_NAMES, k), isLiveKz ? C_YEL : C_MUT, C_BG, L)
             f_cell(tStats, 1, 8 + k, str.tostring(n, "0"), C_TXT, C_BG, C)
             f_cell(tStats, 2, 8 + k, f_pct(w, n), n > 0 and w / n >= 0.5 ? C_GRN : C_RED, C_BG, C)
             f_cell(tStats, 3, 8 + k, f_r(nr), f_col(nr), C_BG, C)
@@ -648,7 +804,7 @@ if barstate.islast
     for ln in enLines
         line.delete(ln)
     array.clear(enLines)
-    if tOn and showSig
+    if tOn and showSig and not drawSetup
         array.push(enLines, line.new(tBar, tEnt, bar_index + 8, tEnt, color = C_TXT, width = 1))
         array.push(enLines, line.new(tBar, tSL, bar_index + 8, tSL, color = C_RED, style = line.style_dashed))
         for m = 1 to 3
