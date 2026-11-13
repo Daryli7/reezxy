@@ -932,7 +932,7 @@ if barstate.islast
 
             string eTxt = (dr == 1 ? "▲ LONG " : "▼ SHORT ") + str.tostring(qty, "0.##") + " @ " + str.tostring(pE, format.mintick) + (note != "" ? "\n" + note : "")
             array.push(rpLabels, label.new(tE, pE, eTxt, xloc = xloc.bar_time, style = dr == 1 ? label.style_label_up : label.style_label_down, color = color.new(dr == 1 ? C_GRN : C_RED, 15), textcolor = color.white, size = size.small))
-            string xTxt = (isOpen ? "OPEN " : "EXIT ") + str.tostring(pXd, format.mintick) + "\n" + f_signed(pts, "0.00") + " pts · " + f_signed(usd, "#,##0.00") + " USD" + (na(rr) ? "" : " · " + f_r(rr))
+            string xTxt = (isOpen ? "OPEN " : "EXIT ") + str.tostring(pXd, format.mintick) + "\n" + f_signed(pts, format.mintick) + " pts · " + f_signed(usd, "#,##0.00") + " USD" + (na(rr) ? "" : " · " + f_r(rr))
             array.push(rpLabels, label.new(tXd, pXd, xTxt, xloc = xloc.bar_time, style = dr == 1 ? label.style_label_down : label.style_label_up, color = color.new(col, 10), textcolor = color.black, size = size.small))
 
             array.push(logT, str.format_time(tE, "MM-dd HH:mm", repTz) + (dr == 1 ? " ▲" : " ▼"))
@@ -947,7 +947,7 @@ if barstate.islast
         f_cell(tRep, 0, 2, "Win %", C_MUT, C_BG, L)
         f_cell(tRep, 1, 2, f_pct(nWin, nClosed), nClosed > 0 and float(nWin) / nClosed >= 0.5 ? C_GRN : C_RED, C_BG, R)
         f_cell(tRep, 0, 3, "Net points", C_MUT, C_BG, L)
-        f_cell(tRep, 1, 3, f_signed(sumPts, "0.00"), f_col(sumPts), C_BG, R)
+        f_cell(tRep, 1, 3, f_signed(sumPts, format.mintick), f_col(sumPts), C_BG, R)
         f_cell(tRep, 0, 4, "Net USD", C_MUT, C_BG, L)
         f_cell(tRep, 1, 4, f_signed(sumUsd, "#,##0.00"), f_col(sumUsd), C_BG, R)
         f_cell(tRep, 0, 5, "Net R", C_MUT, C_BG, L)
