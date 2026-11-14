@@ -965,7 +965,7 @@ if barstate.islast
             array.push(rpLabels, label.new(tEnd, pE, "ENTRY " + str.tostring(pE, format.mintick), xloc = xloc.bar_time, style = label.style_label_left, color = color.new(C_BG, 10), textcolor = C_TXT, size = size.tiny))
             array.push(rpLines, line.new(tE, pE, tXd, pXd, xloc = xloc.bar_time, color = col, style = line.style_dashed, width = 2))
 
-            string eTxt = (dr == 1 ? "▲ LONG " : "▼ SHORT ") + str.tostring(qty, "0.##") + " @ " + str.tostring(pE, format.mintick) + (note != "" ? "\n" + note : "")
+            string eTxt = (dr == 1 ? "▲ LONG " : "▼ SHORT ") + str.tostring(qty, "0.########") + " @ " + str.tostring(pE, format.mintick) + (note != "" ? "\n" + note : "")
             array.push(rpLabels, label.new(tE, pE, eTxt, xloc = xloc.bar_time, style = dr == 1 ? label.style_label_up : label.style_label_down, color = color.new(dr == 1 ? C_GRN : C_RED, 15), textcolor = color.white, size = size.small))
             string xTxt = (isOpen ? "OPEN " : "EXIT ") + str.tostring(pXd, format.mintick) + "\n" + f_signed(pts, format.mintick) + " pts · " + f_signed(usd, "#,##0.00") + " USD" + (na(rr) ? "" : " · " + f_r(rr))
             array.push(rpLabels, label.new(tXd, pXd, xTxt, xloc = xloc.bar_time, style = dr == 1 ? label.style_label_down : label.style_label_up, color = color.new(col, 10), textcolor = color.black, size = size.small))
